@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+  {% if user.is_authenticated %}
+    <h1>Welcome back, {{ user.username }}!</h1>
+    <p>Go to your <a class="btn" href="/menu/">Menu</a>.</p>
+  {% else %}
+    <h1>Welcome to SmartDine Finder 🍽️</h1>
+    <p>Discover your perfect dining hall experience.</p>
+    <div class="links">
+      <a class="btn" href="/login/">Login</a>
+      <a class="btn btn-outline" href="/register/">Register</a>
+    </div>
+  {% endif %}
+{% endblock %}

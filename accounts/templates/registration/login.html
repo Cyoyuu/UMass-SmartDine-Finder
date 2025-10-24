@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Welcome back</h1>
+  <form method="post">
+    {% csrf_token %}
+    <div class="field">
+      <label for="id_username">Username</label>
+      {{ form.username }}
+      {% if form.username.errors %}{{ form.username.errors }}{% endif %}
+    </div>
+    <div class="field">
+      <label for="id_password">Password</label>
+      {{ form.password }}
+      {% if form.password.errors %}{{ form.password.errors }}{% endif %}
+    </div>
+    {% if form.non_field_errors %}
+      <ul class="errorlist">
+        {% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    <button class="btn" type="submit">Login</button>
+  </form>
+  <div class="links">
+    New here? <a href="/register/">Create an account</a>
+  </div>
+{% endblock %}

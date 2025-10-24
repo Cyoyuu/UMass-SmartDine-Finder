@@ -1,6 +1,15 @@
 # UMass-SmartDine-Finder
 CS 520 Project
 
+# How to run
+```
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip django
+python manage.py migrate
+python manage.py runserver
+```
+
 This is the branch we will bring our final changes to.
 Please create a branch from this branch and make changes from there.
 Before bringing anything on main, we will make sure everything is working and running on the dev branch.
