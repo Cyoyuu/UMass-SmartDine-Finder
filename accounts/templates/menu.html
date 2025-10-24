@@ -1,6 +1,285 @@
 {% extends "base.html" %}
 {% block content %}
-  <h1>Menu (Prototype)</h1>
-  <p>You are logged in as <strong>{{ user.username }}</strong>.</p>
-  <p>This is a placeholder protected page. Your teammates can replace this with the real menu list later.</p>
+  <div class="menu-header">
+    <h1>Dining Hall Menus</h1>
+    <p>Welcome back, <strong>{{ user.username }}</strong>! Check out today's dining options.</p>
+  </div>
+
+  {% if error %}
+    <div class="error-message">
+      <h3>⚠️ Error Loading Menus</h3>
+      <p>{{ error }}</p>
+    </div>
+  {% elif dining_halls %}
+    <div class="dining-halls">
+      {% for hall in dining_halls %}
+        <div class="hall-card">
+          <div class="hall-header">
+            <h2 class="hall-name">{{ hall.hallName }}</h2>
+            <div class="hall-status">
+              <span class="status-badge {% if hall.isOpen %}open{% else %}closed{% endif %}">
+                {% if hall.isOpen %}🟢 Open{% else %}🔴 Closed{% endif %}
+              </span>
+            </div>
+          </div>
+          
+          <div class="hall-hours">
+            <strong>Hours:</strong> {{ hall.hours }}
+          </div>
+
+          <div class="meals-container">
+            <div class="meal-section">
+              <button class="meal-toggle" onclick="toggleMeal('breakfast-{{ forloop.counter }}')">
+                <div class="meal-header">
+                  <span class="meal-title">🌅 Breakfast</span>
+                  <span class="meal-hours">{{ hall.mealHours.breakfast }}</span>
+                </div>
+                <span class="toggle-icon">▼</span>
+              </button>
+              <div class="meal-content" id="breakfast-{{ forloop.counter }}">
+                <ul class="meal-items">
+                  {% for item in hall.meals.breakfast %}
+                    <li>{{ item }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+
+            <div class="meal-section">
+              <button class="meal-toggle" onclick="toggleMeal('lunch-{{ forloop.counter }}')">
+                <div class="meal-header">
+                  <span class="meal-title">🌞 Lunch</span>
+                  <span class="meal-hours">{{ hall.mealHours.lunch }}</span>
+                </div>
+                <span class="toggle-icon">▼</span>
+              </button>
+              <div class="meal-content" id="lunch-{{ forloop.counter }}">
+                <ul class="meal-items">
+                  {% for item in hall.meals.lunch %}
+                    <li>{{ item }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+
+            <div class="meal-section">
+              <button class="meal-toggle" onclick="toggleMeal('dinner-{{ forloop.counter }}')">
+                <div class="meal-header">
+                  <span class="meal-title">🌙 Dinner</span>
+                  <span class="meal-hours">{{ hall.mealHours.dinner }}</span>
+                </div>
+                <span class="toggle-icon">▼</span>
+              </button>
+              <div class="meal-content" id="dinner-{{ forloop.counter }}">
+                <ul class="meal-items">
+                  {% for item in hall.meals.dinner %}
+                    <li>{{ item }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h3>📋 No Menu Data Available</h3>
+      <p>We're having trouble loading the dining hall information. Please try again later.</p>
+    </div>
+  {% endif %}
+
+  <style>
+    .menu-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .menu-header h1 {
+      color: #4f46e5;
+      margin-bottom: 0.5rem;
+    }
+
+    .dining-halls {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    }
+
+    .hall-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 1.5rem;
+      border: 1px solid #e5e7eb;
+    }
+
+    .hall-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .hall-name {
+      color: #1f2937;
+      margin: 0;
+      font-size: 1.5rem;
+    }
+
+    .status-badge {
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .status-badge.open {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-badge.closed {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .hall-hours {
+      color: #6b7280;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+    }
+
+    .meals-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .meal-section {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .meal-toggle {
+      width: 100%;
+      background: #f9fafb;
+      border: none;
+      padding: 1rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #374151;
+      transition: background-color 0.2s;
+    }
+
+    .meal-toggle:hover {
+      background: #f3f4f6;
+    }
+
+    .meal-header {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.25rem;
+    }
+
+    .meal-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .meal-hours {
+      font-size: 0.875rem;
+      color: #6b7280;
+      font-weight: 500;
+      background: #e5e7eb;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .toggle-icon {
+      transition: transform 0.2s;
+    }
+
+    .meal-toggle.active .toggle-icon {
+      transform: rotate(180deg);
+    }
+
+    .meal-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+    }
+
+    .meal-content.expanded {
+      max-height: 500px;
+    }
+
+    .meal-items {
+      padding: 1rem;
+      margin: 0;
+      background: #fff;
+      list-style: none;
+    }
+
+    .meal-items li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f3f4f6;
+      color: #374151;
+    }
+
+    .meal-items li:last-child {
+      border-bottom: none;
+    }
+
+    .error-message, .empty-state {
+      text-align: center;
+      padding: 2rem;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      color: #991b1b;
+    }
+
+    .empty-state {
+      background: #f0f9ff;
+      border-color: #bae6fd;
+      color: #0369a1;
+    }
+
+    @media (max-width: 768px) {
+      .dining-halls {
+        grid-template-columns: 1fr;
+      }
+      
+      .hall-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+    }
+  </style>
+
+  <script>
+    function toggleMeal(mealId) {
+      const content = document.getElementById(mealId);
+      const button = content.previousElementSibling;
+      
+      if (content.classList.contains('expanded')) {
+        content.classList.remove('expanded');
+        button.classList.remove('active');
+      } else {
+        content.classList.add('expanded');
+        button.classList.add('active');
+      }
+    }
+  </script>
 {% endblock %}
