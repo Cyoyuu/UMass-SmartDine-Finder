@@ -1,25 +1,58 @@
 {% extends "base.html" %}
+{% block title %}Login - SmartDine Finder{% endblock %}
+
 {% block content %}
-  <h1>Welcome back</h1>
-  <form method="post">
+  <h1>Welcome Back! 👋</h1>
+  <p style="text-align: center; color: #6b7280; margin-bottom: 2rem;">Sign in to access your dining options</p>
+  
+  {% if messages %}
+    {% for message in messages %}
+      <div class="{% if message.tags == 'success' %}success-message{% else %}error-message{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+  
+  <form method="post" novalidate>
     {% csrf_token %}
+    
     <div class="field">
       <label for="id_username">Username</label>
       {{ form.username }}
-      {% if form.username.errors %}{{ form.username.errors }}{% endif %}
+      {% if form.username.errors %}
+        <ul class="errorlist">
+          {% for error in form.username.errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
     </div>
+    
     <div class="field">
       <label for="id_password">Password</label>
       {{ form.password }}
-      {% if form.password.errors %}{{ form.password.errors }}{% endif %}
+      {% if form.password.errors %}
+        <ul class="errorlist">
+          {% for error in form.password.errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
     </div>
+    
     {% if form.non_field_errors %}
-      <ul class="errorlist">
-        {% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}
-      </ul>
+      <div class="error-message">
+        <ul class="errorlist">
+          {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
     {% endif %}
-    <button class="btn" type="submit">Login</button>
+    
+    <button class="btn" type="submit">Sign In</button>
   </form>
+  
   <div class="links">
     New here? <a href="/register/">Create an account</a>
   </div>

@@ -1,26 +1,74 @@
 {% extends "base.html" %}
+{% block title %}Register - SmartDine Finder{% endblock %}
+
 {% block content %}
-  <h1>Create your account</h1>
+  <h1>Join SmartDine! 🎉</h1>
+  <p style="text-align: center; color: #6b7280; margin-bottom: 2rem;">Create your account to discover the best dining options</p>
+  
+  {% if messages %}
+    {% for message in messages %}
+      <div class="{% if message.tags == 'success' %}success-message{% else %}error-message{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+  
   <form method="post" novalidate>
     {% csrf_token %}
+    
     <div class="field">
       <label for="id_username">Username</label>
       {{ form.username }}
-      {{ form.username.errors }}
+      {% if form.username.errors %}
+        <ul class="errorlist">
+          {% for error in form.username.errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
     </div>
+    
     <div class="field">
       <label for="id_password1">Password</label>
       {{ form.password1 }}
-      {{ form.password1.errors }}
+      {% if form.password1.errors %}
+        <ul class="errorlist">
+          {% for error in form.password1.errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+      <small style="color: #6b7280; font-size: 0.875rem; margin-top: 0.25rem; display: block;">
+        Your password must be at least 8 characters long and contain both letters and numbers.
+      </small>
     </div>
+    
     <div class="field">
       <label for="id_password2">Confirm Password</label>
       {{ form.password2 }}
-      {{ form.password2.errors }}
+      {% if form.password2.errors %}
+        <ul class="errorlist">
+          {% for error in form.password2.errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
     </div>
-    <button class="btn" type="submit">Register</button>
+    
+    {% if form.non_field_errors %}
+      <div class="error-message">
+        <ul class="errorlist">
+          {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+    
+    <button class="btn" type="submit">Create Account</button>
   </form>
+  
   <div class="links">
-    Already have an account? <a href="/login/">Login</a>
+    Already have an account? <a href="/login/">Sign in here</a>
   </div>
 {% endblock %}
