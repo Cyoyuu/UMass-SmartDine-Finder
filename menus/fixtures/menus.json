@@ -1,0 +1,38 @@
+[
+    {
+      "model": "menus.dininghall",
+      "pk": 1,
+      "fields": {
+        "hallName": "Hamp",
+        "hours": "07:00-20:00",
+        "meals": {
+          "breakfast": ["Oatmeal", "Scrambled Eggs"],
+          "lunch": ["Veg Curry", "Rice"],
+          "dinner": ["Pasta", "Salad"]
+        }
+      }
+    },
+    {
+      "model": "menus.dininghall",
+      "pk": 2,
+      "fields": {
+        "hallName": "Berkshire",
+        "hours": "08:00-19:00",
+        "meals": {
+          "breakfast": ["Bagel", "Coffee"],
+          "lunch": ["Burger", "Fries"],
+          "dinner": ["Steak", "Mashed Potatoes"]
+        }
+      }
+    },
+    {
+      "model": "menus.dininghall",
+      "pk": 3,
+      "fields": {
+        "hallName": "Franklin",
+        "hours": "09:00-21:00",
+        "meals": {}
+      }
+    }
+  ]
+  

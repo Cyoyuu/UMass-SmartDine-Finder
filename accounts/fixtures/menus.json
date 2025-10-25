@@ -1,44 +1,56 @@
 [
   {
-    "hallName": "Hamp",
-    "hours": "07:00-16:00",
-    "mealHours": {
-      "breakfast": "07:00-10:30",
-      "lunch": "11:00-14:30",
-      "dinner": "17:00-20:00"
-    },
-    "meals": {
-      "breakfast": ["Oatmeal", "Scrambled Eggs", "Fresh Fruit", "Yogurt", "Toast"],
-      "lunch": ["Veg Curry", "Rice", "Chicken Tenders", "Salad Bar", "Soup"],
-      "dinner": ["Pasta", "Salad", "Grilled Chicken", "Vegetables", "Dessert"]
+    "model": "menus.dininghall",
+    "pk": 1,
+    "fields": {
+      "hallName": "Hamp",
+      "hours": "07:00-16:00",
+      "mealHours": {
+        "breakfast": "07:00-10:30",
+        "lunch": "11:00-14:30",
+        "dinner": "17:00-20:00"
+      },
+      "meals": {
+        "breakfast": ["Oatmeal", "Scrambled Eggs", "Fresh Fruit", "Yogurt", "Toast"],
+        "lunch": ["Veg Curry", "Rice", "Chicken Tenders", "Salad Bar", "Soup"],
+        "dinner": ["Pasta", "Salad", "Grilled Chicken", "Vegetables", "Dessert"]
+      }
     }
   },
   {
-    "hallName": "Worcester",
-    "hours": "06:30-21:00",
-    "mealHours": {
-      "breakfast": "06:30-10:00",
-      "lunch": "11:30-15:00",
-      "dinner": "17:30-21:00"
-    },
-    "meals": {
-      "breakfast": ["Pancakes", "Bacon", "Cereal", "Milk", "Coffee"],
-      "lunch": ["Pizza", "Sandwiches", "French Fries", "Salad", "Fruit"],
-      "dinner": ["Steak", "Mashed Potatoes", "Green Beans", "Rolls", "Ice Cream"]
+    "model": "menus.dininghall",
+    "pk": 2,
+    "fields": {
+      "hallName": "Worcester",
+      "hours": "06:30-21:00",
+      "mealHours": {
+        "breakfast": "06:30-10:00",
+        "lunch": "11:30-15:00",
+        "dinner": "17:30-21:00"
+      },
+      "meals": {
+        "breakfast": ["Pancakes", "Bacon", "Cereal", "Milk", "Coffee"],
+        "lunch": ["Pizza", "Sandwiches", "French Fries", "Salad", "Fruit"],
+        "dinner": ["Steak", "Mashed Potatoes", "Green Beans", "Rolls", "Ice Cream"]
+      }
     }
   },
   {
-    "hallName": "Franklin",
-    "hours": "07:30-19:30",
-    "mealHours": {
-      "breakfast": "07:30-10:00",
-      "lunch": "11:00-14:00",
-      "dinner": "17:00-19:30"
-    },
-    "meals": {
-      "breakfast": ["Waffles", "Sausage", "Orange Juice", "Bagels", "Cream Cheese"],
-      "lunch": ["Burger", "Hot Dogs", "Onion Rings", "Coleslaw", "Cookies"],
-      "dinner": ["Fish", "Rice Pilaf", "Broccoli", "Bread", "Pudding"]
+    "model": "menus.dininghall",
+    "pk": 3,
+    "fields": {
+      "hallName": "Franklin",
+      "hours": "07:30-19:30",
+      "mealHours": {
+        "breakfast": "07:30-10:00",
+        "lunch": "11:00-14:00",
+        "dinner": "17:00-19:30"
+      },
+      "meals": {
+        "breakfast": ["Waffles", "Sausage", "Orange Juice", "Bagels", "Cream Cheese"],
+        "lunch": ["Burger", "Hot Dogs", "Onion Rings", "Coleslaw", "Cookies"],
+        "dinner": ["Fish", "Rice Pilaf", "Broccoli", "Bread", "Pudding"]
+      }
     }
   }
 ]

@@ -10,6 +10,7 @@ import json
 import os
 from django.conf import settings
 from django.http import JsonResponse
+from menus.models import DiningHall
 
 class RegisterView(CreateView):
     template_name = 'registration/register.html'
@@ -22,14 +23,19 @@ def home_view(request):
 def get_mock_dining_data():
     """Load dining hall data from JSON file"""
     try:
-        # Get the path to the JSON file
-        json_file_path = os.path.join(settings.BASE_DIR, 'accounts', 'fixtures', 'menus.json')
-        
-        # Read and parse the JSON file
-        with open(json_file_path, 'r', encoding='utf-8') as file:
-            data = json.load(file)
-        
-        return data
+        halls = DiningHall.objects.all()
+        response = []
+
+        for hall in halls:
+            response.append({
+                "hallName": hall.hallName,
+                "hours": hall.hours,
+                "mealHours": hall.mealHours,
+                "isOpen": is_hall_open(hall.hours),
+                "meals": hall.meals or {"breakfast": [], "lunch": [], "dinner": []}
+            })
+
+        return response
     except FileNotFoundError:
         # Fallback data if JSON file is not found
         return [
