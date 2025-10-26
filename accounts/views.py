@@ -98,6 +98,7 @@ def menu_view(request):
     
     return render(request, 'menu.html', context)
 
+@login_required
 def api_menus_view(request):
     """API endpoint that returns dining hall data as JSON"""
     try:
