@@ -1,26 +1,88 @@
 {% extends "base.html" %}
 {% block content %}
   <h1>Create your account</h1>
-  <form method="post" novalidate>
+  {% if form.non_field_errors %}
+    <ul class="errorlist">
+      {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  <form method="post">
     {% csrf_token %}
     <div class="field">
       <label for="id_username">Username</label>
       {{ form.username }}
-      {{ form.username.errors }}
+      {% if form.username.errors %}
+        {{ form.username.errors }}
+      {% endif %}
     </div>
     <div class="field">
       <label for="id_password1">Password</label>
-      {{ form.password1 }}
-      {{ form.password1.errors }}
+      <div class="password-wrapper">
+        <input type="password" name="password1" id="id_password1" required>
+        <button type="button" class="password-toggle" onclick="togglePassword('id_password1')">Show</button>
+      </div>
+      {% if form.password1.errors %}
+        {{ form.password1.errors }}
+      {% endif %}
     </div>
     <div class="field">
       <label for="id_password2">Confirm Password</label>
-      {{ form.password2 }}
-      {{ form.password2.errors }}
+      <div class="password-wrapper">
+        <input type="password" name="password2" id="id_password2" required>
+        <button type="button" class="password-toggle" onclick="togglePassword('id_password2')">Show</button>
+      </div>
+      <div id="password-match" style="display:none;" class="password-match"></div>
+      {% if form.password2.errors %}
+        {{ form.password2.errors }}
+      {% endif %}
     </div>
     <button class="btn" type="submit">Register</button>
   </form>
   <div class="links">
     Already have an account? <a href="/login/">Login</a>
   </div>
+
+  <script>
+    // toggle password visibility
+    function togglePassword(fieldId) {
+      const field = document.getElementById(fieldId);
+      const toggleBtn = field.nextElementSibling;
+      
+      if (field.type === 'password') {
+        field.type = 'text';
+        toggleBtn.textContent = 'Hide';
+      } else {
+        field.type = 'password';
+        toggleBtn.textContent = 'Show';
+      }
+    }
+
+    // check if passwords match in real time
+    document.getElementById('id_password1').addEventListener('input', checkPasswordMatch);
+    document.getElementById('id_password2').addEventListener('input', checkPasswordMatch);
+
+    function checkPasswordMatch() {
+      const password1 = document.getElementById('id_password1').value;
+      const password2 = document.getElementById('id_password2').value;
+      const matchDiv = document.getElementById('password-match');
+      
+      if (password2.length === 0) {
+        matchDiv.style.display = 'none';
+        return;
+      }
+      
+      if (password1 && password2) {
+        matchDiv.style.display = 'flex';
+        if (password1 === password2) {
+          matchDiv.textContent = 'Passwords match';
+          matchDiv.classList.remove('error');
+        } else {
+          matchDiv.textContent = 'Password does not match';
+          matchDiv.classList.add('error');
+        }
+      }
+    }
+  </script>
 {% endblock %}

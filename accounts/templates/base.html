@@ -12,6 +12,21 @@
       .btn{display:inline-block;padding:10px 14px;border-radius:8px;background:#4f46e5;color:#fff;text-decoration:none;border:none;cursor:pointer}
       .btn-outline{background:#fff;color:#4f46e5;border:1px solid #4f46e5}
       .links{margin-top:16px}
+      .field{margin-bottom:16px}
+      .field label{display:block;margin-bottom:6px;font-weight:500;color:#333}
+      .field input[type="text"],.field input[type="password"],.field input[type="email"]{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box}
+      .field input:focus{outline:none;border-color:#4f46e5}
+      .password-wrapper{position:relative;width:100%}
+      .password-wrapper input{padding-right:50px}
+      .password-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#666;font-size:13px;padding:4px 8px;z-index:1}
+      .password-toggle:hover{color:#4f46e5}
+      .errorlist{list-style:none;padding:0;margin:8px 0 0 0;color:#dc2626;font-size:14px}
+      .errorlist li{margin-bottom:4px;padding:8px;background:#fef2f2;border-left:3px solid #dc2626;border-radius:4px}
+      form{margin-top:24px}
+      .password-match{color:#16a34a;font-size:13px;margin-top:4px;display:flex;align-items:center;gap:4px}
+      .password-match.error{color:#dc2626}
+      .password-match::before{content:'';display:inline-block;width:16px;height:16px;background:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22currentColor%22><path fill-rule=%22evenodd%22 d=%22M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z%22 clip-rule=%22evenodd%22/></svg>') no-repeat center}
+      .password-match.error::before{background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22currentColor%22><path fill-rule=%22evenodd%22 d=%22M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.829V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z%22 clip-rule=%22evenodd%22/></svg>')}
     </style>
   </head>
   <body>
