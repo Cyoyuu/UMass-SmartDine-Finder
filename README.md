@@ -6,8 +6,14 @@ CS 520 Project
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip django
+pip install psycopg2
 python manage.py migrate
 python manage.py runserver
+```
+
+In case of failure when installing psycopg2 on mac:
+```
+pip install psycopg2-binary
 ```
 
 This is the branch we will bring our final changes to.
