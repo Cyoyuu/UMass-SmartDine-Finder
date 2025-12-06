@@ -6,7 +6,13 @@ CS 520 Project
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip django
-pip install psycopg2
+git clone https://github.com/simon-andrews/umass-toolkit.git
+cd umass-toolkit
+python setup.py install
+cd ..
+rm -rf umass-toolkit
+pip install psycopg2 openai bs4 pint requests
+export OPENAI_API_KEY="<PUT YOUR KEY HERE>"
 python manage.py migrate
 python manage.py runserver
 ```
