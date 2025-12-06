@@ -1,14 +1,39 @@
 # recommendation.py
 import json
 import re
+import sys
+import os
 from datetime import datetime, date
 from collections import defaultdict
+from pathlib import Path
 
 from django.utils import timezone
 from openai import OpenAI
+
+# Load environment variables from .env file using python-dotenv
+from dotenv import load_dotenv
+
+# Load .env file from project root
+env_path = Path(__file__).parent / '.env'
+load_dotenv(env_path)
+
+# Add umass-toolkit to Python path if not already installed
+_umass_toolkit_path = os.path.join(os.path.dirname(__file__), 'umass-toolkit')
+if os.path.exists(_umass_toolkit_path) and _umass_toolkit_path not in sys.path:
+    sys.path.insert(0, _umass_toolkit_path)
 from umass_toolkit.dining import get_locations, get_menu
 
-client = OpenAI()
+
+# Get API key from environment variables (loaded from .env file or system env)
+_openrouter_api_key = os.environ.get('OPENROUTER_API_KEY') or os.environ.get('OPENAI_API_KEY')
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=_openrouter_api_key,
+    default_headers={
+        "HTTP-Referer": "https://github.com/yourusername/UMass-SmartDine-Finder",  # Optional: for analytics
+        "X-Title": "UMass SmartDine Finder",  # Optional: app name
+    }
+) if _openrouter_api_key else None
 
 DINING_SLUGS = ["berkshire", "worcester", "franklin", "hampshire"]
 
@@ -36,6 +61,15 @@ def _current_meal_keys():
 # Map slug → location ID
 # ------------------------------------------------------------
 def _map_slug_to_location_id():
+    if get_locations is None:
+        # Fallback mapping if umass_toolkit is not available
+        return {
+            "berkshire": 1,
+            "worcester": 2,
+            "franklin": 3,
+            "hampshire": 4
+        }
+    
     locations = get_locations()
     mapping = {}
 
@@ -175,7 +209,6 @@ select UP TO 3 dishes that BEST match:
 - user's likes/dislikes
 - user's goals
 - user's current mood text
-
 Return ONLY valid JSON like:
 
 {{
@@ -186,8 +219,15 @@ Return ONLY valid JSON like:
 }}
 """
 
+    if client is None:
+        raise ValueError(
+            "OpenRouter API key not found. Please set OPENROUTER_API_KEY or OPENAI_API_KEY environment variable."
+        )
+    
+    # OpenRouter supports many models. Using a cost-effective model.
+    # You can change this to any model supported by OpenRouter (e.g., "openai/gpt-4o-mini", "anthropic/claude-3-haiku", etc.)
     resp = client.chat.completions.create(
-        model="gpt-4.1-mini",
+        model="openai/gpt-4o-mini",  # OpenRouter model format: provider/model-name
         messages=[
             {"role": "system", "content": "You output ONLY JSON. No explanations."},
             {"role": "user", "content": prompt},
@@ -209,14 +249,36 @@ Return ONLY valid JSON like:
 # ------------------------------------------------------------
 # MAIN PUBLIC FUNCTION
 # ------------------------------------------------------------
-def get_recommendations_for_all_dining(mood_text, stored_preferences):
-    slug_to_id = _map_slug_to_location_id()
-    today = timezone.localdate()
+def get_recommendations_for_all_dining(mood_text, stored_preferences, menu_data=None):
+    """
+    Get recommendations for all dining halls.
+    
+    Args:
+        mood_text: User's request/mood text
+        stored_preferences: User preferences dict
+        menu_data: Optional pre-formatted menu data (from database).
+                   If None, will fetch from umass_toolkit API.
+    
+    Returns:
+        Dict mapping hall slugs to list of recommended dish names
+    """
+    if menu_data is not None:
+        # Use provided menu data (from database)
+        full_menu = menu_data
+    else:
+        # Fetch from umass_toolkit API (original behavior)
+        if get_menu is None:
+            raise ImportError(
+                "umass_toolkit is not available and no menu_data provided. "
+                "Either install umass_toolkit or provide menu_data parameter."
+            )
+        slug_to_id = _map_slug_to_location_id()
+        today = timezone.localdate()
 
-    # Fetch full raw menu
-    full_menu = {}
-    for slug in DINING_SLUGS:
-        full_menu[slug] = get_menu(slug_to_id[slug], date=today)
+        # Fetch full raw menu
+        full_menu = {}
+        for slug in DINING_SLUGS:
+            full_menu[slug] = get_menu(slug_to_id[slug], date=today)
 
     # Hard filter
     candidates = _filter_menu_by_time_and_prefs(full_menu, stored_preferences)

@@ -833,7 +833,7 @@
               name: item.name,
               calories: item.calories || 0,
               diningHall: item.hall || 'Unknown',
-              mealType: this.guessMealType(),
+              mealType: item.mealType || this.guessMealType(), // Use stored mealType, fallback to guess
               addedAt: item.addedAt
             }));
             

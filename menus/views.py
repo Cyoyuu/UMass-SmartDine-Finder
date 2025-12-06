@@ -7,6 +7,7 @@ import json
 import os
 from django.conf import settings
 from .models import DiningHall, Review, UserProfile, MealHistory, ALLERGEN_CHOICES, DIET_CHOICES
+from recommendation import get_recommendations_for_all_dining
 
 
 # ============== Load Menu Data from Database ==============
@@ -807,3 +808,157 @@ def get_meal_history_detail(request, date_str):
             'success': False,
             'error': str(e)
         }, status=500)
+
+
+# ============== AI Assistant API ==============
+
+def convert_db_menu_to_recommendation_format(dining_halls_data):
+    """
+    Convert database menu format to recommendation.py expected format.
+    
+    Database format: {
+        "hallName": "Worcester",
+        "meals": {
+            "breakfast": [{"name": "...", "calories": 150, "allergens": [...], "dietTags": [...]}],
+            "lunch": [...],
+            "dinner": [...]
+        }
+    }
+    
+    Recommendation format: {
+        "berkshire": [
+            {
+                "dish-name": "...",
+                "meal-name": "breakfast",
+                "allergens": [...],
+                "diets": [...],
+                "category-name": "..."
+            }
+        ]
+    }
+    """
+    result = {}
+    slug_mapping = {
+        "Worcester": "worcester",
+        "Hampshire": "hampshire",
+        "Berkshire": "berkshire",
+        "Franklin": "franklin"
+    }
+    
+    for hall in dining_halls_data:
+        hall_name = hall.get('hallName', '')
+        slug = slug_mapping.get(hall_name, hall_name.lower())
+        
+        if slug not in result:
+            result[slug] = []
+        
+        meals = hall.get('meals', {})
+        for meal_type in ['breakfast', 'lunch', 'dinner']:
+            items = meals.get(meal_type, [])
+            for item in items:
+                if isinstance(item, dict):
+                    converted_item = {
+                        "dish-name": item.get('name', 'Unknown'),
+                        "meal-name": meal_type,
+                        "allergens": item.get('allergens', []),
+                        "diets": item.get('dietTags', []),
+                        "category-name": meal_type.capitalize(),
+                        "calories": item.get('calories', 0)
+                    }
+                    result[slug].append(converted_item)
+    
+    return result
+
+
+def get_user_preferences_for_recommendation(profile):
+    """Convert UserProfile to recommendation.py expected preferences format."""
+    return {
+        "avoid_allergens": profile.allergens or [],
+        "avoid_ingredients": [],  # Not stored in UserProfile currently
+        "avoid_keywords": [],  # Not stored in UserProfile currently
+        "diet": profile.dietPreferences or [],
+        "likes": [],  # Not stored in UserProfile currently
+        "dislikes": [],  # Not stored in UserProfile currently
+        "goals": []  # Not stored in UserProfile currently
+    }
+
+
+@login_required
+@require_http_methods(["POST"])
+def ai_assistant_api(request):
+    """
+    AI Assistant API endpoint that uses recommendation.py to provide intelligent responses.
+    """
+    try:
+        data = json.loads(request.body)
+        user_message = data.get('message', '').strip()
+        
+        if not user_message:
+            return JsonResponse({
+                'success': False,
+                'error': 'Message is required'
+            }, status=400)
+        
+        # Get user profile
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        
+        # Get menu data from database
+        dining_halls_data = get_dining_halls_data(current_user=request.user, include_filtered=False)
+        
+        # Convert to recommendation.py format
+        menu_data = convert_db_menu_to_recommendation_format(dining_halls_data)
+        
+        # Get user preferences
+        user_prefs = get_user_preferences_for_recommendation(profile)
+        
+        # Use recommendation.py to get recommendations (pass menu_data from database)
+        recommendations = get_recommendations_for_all_dining(user_message, user_prefs, menu_data=menu_data)
+        
+        # Format response for display
+        response_text = format_recommendations_response(recommendations, user_message)
+        
+        return JsonResponse({
+            'success': True,
+            'response': response_text,
+            'recommendations': recommendations
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+def format_recommendations_response(recommendations, user_message):
+    """Format recommendations into a user-friendly text response."""
+    hall_names = {
+        'berkshire': 'Berkshire',
+        'worcester': 'Worcester',
+        'franklin': 'Franklin',
+        'hampshire': 'Hampshire'
+    }
+    
+    response_parts = []
+    
+    # Check if we have any recommendations
+    has_recommendations = any(recommendations.get(slug, []) for slug in ['berkshire', 'worcester', 'franklin', 'hampshire'])
+    
+    if not has_recommendations:
+        return "I couldn't find specific dishes matching your request, but I'd be happy to help you explore the dining options. Would you like me to suggest something based on your dietary preferences?"
+    
+    response_parts.append("Based on your request, here are my recommendations:")
+    response_parts.append("")
+    
+    for slug in ['berkshire', 'worcester', 'franklin', 'hampshire']:
+        dishes = recommendations.get(slug, [])
+        if dishes:
+            hall_name = hall_names.get(slug, slug.capitalize())
+            response_parts.append(f"**{hall_name}:**")
+            for dish in dishes[:3]:  # Limit to 3 dishes per hall
+                response_parts.append(f"  • {dish}")
+            response_parts.append("")
+    
+    return "\n".join(response_parts)

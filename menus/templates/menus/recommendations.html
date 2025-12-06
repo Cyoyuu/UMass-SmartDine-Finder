@@ -1306,6 +1306,12 @@
     border-bottom-right-radius: 4px;
   }
 
+  .chat-message.assistant.error {
+    background: #fee2e2;
+    color: #991b1b;
+    border-left: 3px solid #ef4444;
+  }
+
   .ai-input-area {
     padding: 12px 16px;
     border-top: 1px solid #e2e8f0;
@@ -2416,29 +2422,81 @@
     if (!message) return;
 
     const chat = document.getElementById('chatMessages');
+    const sendBtn = document.querySelector('.ai-send-btn');
+    
+    // Add user message
     chat.innerHTML += `<div class="chat-message user">${escapeHtml(message)}</div>`;
     input.value = '';
     input.style.height = 'auto';
     chat.scrollTop = chat.scrollHeight;
+    
+    // Show loading indicator
+    const loadingId = 'loading-' + Date.now();
+    chat.innerHTML += `<div class="chat-message assistant" id="${loadingId}">Thinking...</div>`;
+    chat.scrollTop = chat.scrollHeight;
+    
+    // Disable input while processing
+    input.disabled = true;
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Sending...';
 
-    setTimeout(() => {
-      const response = generateResponse(message);
-      chat.innerHTML += `<div class="chat-message assistant">${response}</div>`;
+    // Call backend API
+    fetch('/menus/ai-assistant/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRFToken()
+      },
+      body: JSON.stringify({ message: message })
+    })
+    .then(response => response.json())
+    .then(data => {
+      // Remove loading message
+      const loadingEl = document.getElementById(loadingId);
+      if (loadingEl) loadingEl.remove();
+      
+      if (data.success) {
+        // Format response with line breaks
+        const formattedResponse = formatResponseText(data.response);
+        chat.innerHTML += `<div class="chat-message assistant">${formattedResponse}</div>`;
+      } else {
+        chat.innerHTML += `<div class="chat-message assistant error">Sorry, I encountered an error: ${escapeHtml(data.error || 'Unknown error')}</div>`;
+      }
       chat.scrollTop = chat.scrollHeight;
-    }, 500);
+    })
+    .catch(error => {
+      // Remove loading message
+      const loadingEl = document.getElementById(loadingId);
+      if (loadingEl) loadingEl.remove();
+      
+      console.error('Error:', error);
+      chat.innerHTML += `<div class="chat-message assistant error">Sorry, I'm having trouble connecting. Please try again later.</div>`;
+      chat.scrollTop = chat.scrollHeight;
+    })
+    .finally(() => {
+      // Re-enable input
+      input.disabled = false;
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Send';
+      input.focus();
+    });
   }
 
-  function generateResponse(message) {
-    const lower = message.toLowerCase();
-    if (lower.includes('vegetarian') || lower.includes('vegan')) {
-      return "Based on today's menu, I'd recommend checking out the salad bar at Berkshire or the vegetable stir-fry at Hampshire. Both have excellent plant-based options!";
-    } else if (lower.includes('protein') || lower.includes('chicken')) {
-      return "For high-protein options today, Hampshire has grilled chicken breast and Worcester is serving beef stir-fry. Both are great choices!";
-    } else if (lower.includes('calorie') || lower.includes('healthy')) {
-      return "Looking for lighter options? Try the grilled fish at Berkshire (~280 kcal) or the soup and salad combo at Frank.";
-    } else {
-      return "I can help you find meals that match your dietary needs. What would you like to know more about?";
-    }
+  function formatResponseText(text) {
+    // Convert markdown-style formatting to HTML
+    // Handle **bold** and line breaks
+    return escapeHtml(text)
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
+  }
+
+  function getCSRFToken() {
+    // Try to get CSRF token from cookie or form
+    const cookieMatch = document.cookie.match(/csrftoken=([^;]+)/);
+    if (cookieMatch) return cookieMatch[1];
+    const tokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    if (tokenInput) return tokenInput.value;
+    return '';
   }
 
   function escapeHtml(text) {

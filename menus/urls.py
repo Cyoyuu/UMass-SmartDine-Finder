@@ -15,4 +15,7 @@ urlpatterns = [
     path('history/', views.get_meal_history, name='meal_history'),
     path('history/save/', views.save_meal_history, name='save_meal_history'),
     path('history/<str:date_str>/', views.get_meal_history_detail, name='meal_history_detail'),
+    
+    # AI Assistant API endpoint
+    path('ai-assistant/', views.ai_assistant_api, name='ai_assistant'),
 ]
