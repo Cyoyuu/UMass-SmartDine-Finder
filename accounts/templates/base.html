@@ -2,49 +2,1148 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>SmartDine</title>
+    <title>SmartDine Finder</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-      body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;background:#f7f7fb;}
-      header{background:#4f46e5;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
-      header a{color:#fff;text-decoration:none;margin-left:12px}
-      main{max-width:800px;margin:32px auto;padding:24px;background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
-      .btn{display:inline-block;padding:10px 14px;border-radius:8px;background:#4f46e5;color:#fff;text-decoration:none;border:none;cursor:pointer}
-      .btn-outline{background:#fff;color:#4f46e5;border:1px solid #4f46e5}
-      .links{margin-top:16px}
-      .field{margin-bottom:16px}
-      .field label{display:block;margin-bottom:6px;font-weight:500;color:#333}
-      .field input[type="text"],.field input[type="password"],.field input[type="email"]{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box}
-      .field input:focus{outline:none;border-color:#4f46e5}
-      .password-wrapper{position:relative;width:100%}
-      .password-wrapper input{padding-right:50px}
-      .password-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#666;font-size:13px;padding:4px 8px;z-index:1}
-      .password-toggle:hover{color:#4f46e5}
-      .errorlist{list-style:none;padding:0;margin:8px 0 0 0;color:#dc2626;font-size:14px}
-      .errorlist li{margin-bottom:4px;padding:8px;background:#fef2f2;border-left:3px solid #dc2626;border-radius:4px}
-      form{margin-top:24px}
-      .password-match{color:#16a34a;font-size:13px;margin-top:4px;display:flex;align-items:center;gap:4px}
-      .password-match.error{color:#dc2626}
-      .password-match::before{content:'';display:inline-block;width:16px;height:16px;background:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22currentColor%22><path fill-rule=%22evenodd%22 d=%22M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z%22 clip-rule=%22evenodd%22/></svg>') no-repeat center}
-      .password-match.error::before{background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22currentColor%22><path fill-rule=%22evenodd%22 d=%22M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.829V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z%22 clip-rule=%22evenodd%22/></svg>')}
+      /* Reset & Base */
+      *, *::before, *::after { box-sizing: border-box; }
+      
+      body {
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        margin: 0;
+        background: #f8fafc;
+        color: #0f172a;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Header */
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: #fff;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 0 20px;
+        height: 56px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #0f172a;
+        text-decoration: none;
+      }
+
+      .logo-mark {
+        width: 28px;
+        height: 28px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 700;
+        font-size: 14px;
+      }
+
+      nav {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+      }
+
+      nav a {
+        color: #64748b;
+        text-decoration: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.15s ease;
+      }
+
+      nav a:hover {
+        color: #0f172a;
+        background: #f1f5f9;
+      }
+
+      nav a.active {
+        color: #6366f1;
+        background: #eef2ff;
+      }
+
+      .nav-divider {
+        width: 1px;
+        height: 16px;
+        background: #e2e8f0;
+        margin: 0 8px;
+      }
+
+      .user-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 10px 4px 4px;
+        background: #f1f5f9;
+        border-radius: 20px;
+        font-size: 12px;
+        color: #475569;
+        margin-left: 4px;
+      }
+
+      .user-avatar {
+        width: 22px;
+        height: 22px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 10px;
+        font-weight: 600;
+      }
+
+      /* Main Content */
+      main {
+        max-width: 720px;
+        margin: 24px auto;
+        padding: 24px;
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+      }
+
+      /* Typography */
+      h1 { font-size: 22px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0; }
+      h2 { font-size: 18px; font-weight: 600; color: #0f172a; margin: 0 0 12px 0; }
+      h3 { font-size: 15px; font-weight: 600; color: #0f172a; margin: 0 0 8px 0; }
+      p { color: #64748b; margin: 0 0 12px 0; font-size: 14px; }
+
+      /* Buttons */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 10px 16px;
+        border-radius: 8px;
+        background: #6366f1;
+        color: #fff;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.15s ease;
+      }
+
+      .btn:hover {
+        background: #4f46e5;
+      }
+
+      .btn-outline {
+        background: #fff;
+        color: #6366f1;
+        border: 1px solid #6366f1;
+      }
+
+      .btn-outline:hover {
+        background: #eef2ff;
+      }
+
+      .btn-ghost {
+        background: transparent;
+        color: #64748b;
+      }
+
+      .btn-ghost:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+      }
+
+      /* Forms */
+      .field {
+        margin-bottom: 16px;
+      }
+
+      .field label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 500;
+        color: #0f172a;
+        font-size: 13px;
+      }
+
+      .field input[type="text"],
+      .field input[type="password"],
+      .field input[type="email"] {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.15s ease;
+        background: #fff;
+      }
+
+      .field input:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      }
+
+      .password-wrapper {
+        position: relative;
+      }
+
+      .password-wrapper input {
+        padding-right: 48px;
+      }
+
+      .password-toggle {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #94a3b8;
+        font-size: 12px;
+        padding: 4px;
+      }
+
+      .password-toggle:hover {
+        color: #6366f1;
+      }
+
+      /* Error Messages */
+      .errorlist {
+        list-style: none;
+        padding: 0;
+        margin: 8px 0 0 0;
+      }
+
+      .errorlist li {
+        margin-bottom: 4px;
+        padding: 8px 12px;
+        background: #fef2f2;
+        border-left: 3px solid #ef4444;
+        border-radius: 4px;
+        color: #dc2626;
+        font-size: 13px;
+      }
+
+      form {
+        margin-top: 20px;
+      }
+
+      .links {
+        margin-top: 16px;
+      }
+
+      /* Password Match */
+      .password-match {
+        color: #22c55e;
+        font-size: 12px;
+        margin-top: 4px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .password-match.error {
+        color: #ef4444;
+      }
+
+      /* Cards */
+      .card {
+        background: #fff;
+        border-radius: 10px;
+        padding: 16px;
+        border: 1px solid #e2e8f0;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        header { padding: 0 12px; }
+        .logo span { display: none; }
+        nav a { padding: 8px; font-size: 12px; }
+        .nav-divider { display: none; }
+        .user-badge span { display: none; }
+        main { margin: 12px; padding: 16px; }
+      }
+
+      /* Selection Sidebar */
+      .selection-toggle {
+        position: fixed;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1001;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: #fff;
+        border: none;
+        padding: 12px 8px;
+        border-radius: 8px 0 0 8px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+      }
+
+      .selection-toggle:hover {
+        padding-right: 12px;
+      }
+
+      .selection-toggle .badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 18px;
+        height: 18px;
+        background: #fff;
+        color: #6366f1;
+        border-radius: 9px;
+        font-size: 10px;
+        font-weight: 700;
+        margin-top: 6px;
+      }
+
+      .selection-sidebar {
+        position: fixed;
+        right: -340px;
+        top: 0;
+        width: 340px;
+        height: 100vh;
+        background: #fff;
+        box-shadow: -4px 0 20px rgba(0,0,0,0.1);
+        z-index: 1002;
+        transition: right 0.3s ease;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .selection-sidebar.open {
+        right: 0;
+      }
+
+      .sidebar-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: #fff;
+      }
+
+      .sidebar-header h3 {
+        color: #fff;
+        margin: 0;
+        font-size: 15px;
+      }
+
+      .sidebar-close {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: #fff;
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .sidebar-close:hover {
+        background: rgba(255,255,255,0.3);
+      }
+
+      .sidebar-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+      }
+
+      .selection-empty {
+        text-align: center;
+        padding: 40px 20px;
+        color: #94a3b8;
+      }
+
+      .selection-empty-icon {
+        font-size: 40px;
+        margin-bottom: 12px;
+      }
+
+      .selection-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: #f8fafc;
+        border-radius: 10px;
+        margin-bottom: 8px;
+      }
+
+      .selection-item-color {
+        width: 8px;
+        height: 40px;
+        border-radius: 4px;
+        flex-shrink: 0;
+      }
+
+      .selection-item-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .selection-item-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: #0f172a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .selection-item-meta {
+        font-size: 11px;
+        color: #64748b;
+        margin-top: 2px;
+      }
+
+      .selection-item-remove {
+        background: none;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+
+      .selection-item-remove:hover {
+        color: #ef4444;
+        background: #fef2f2;
+      }
+
+      /* Meal Group Styles */
+      .meal-group {
+        margin-bottom: 12px;
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 10px;
+      }
+
+      .meal-group-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 8px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .meal-group-icon {
+        font-size: 14px;
+      }
+
+      .meal-group-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #475569;
+      }
+
+      .meal-group-hall {
+        margin-left: auto;
+        font-size: 10px;
+        color: #fff;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        padding: 2px 8px;
+        border-radius: 10px;
+      }
+
+      .meal-group-items {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .meal-group .selection-item {
+        background: #fff;
+        padding: 8px;
+        border-radius: 8px;
+      }
+
+      .sidebar-footer {
+        padding: 16px;
+        border-top: 1px solid #e2e8f0;
+        background: #f8fafc;
+      }
+
+      .calories-summary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .calories-label {
+        font-size: 13px;
+        color: #64748b;
+      }
+
+      .calories-value {
+        font-size: 18px;
+        font-weight: 700;
+        color: #0f172a;
+      }
+
+      .calories-warning {
+        color: #f59e0b;
+      }
+
+      .calories-danger {
+        color: #ef4444;
+      }
+
+      .clear-selection {
+        width: 100%;
+        padding: 10px;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+
+      .clear-selection:hover {
+        border-color: #ef4444;
+        color: #ef4444;
+        background: #fef2f2;
+      }
+
+      .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.3);
+        z-index: 1001;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .sidebar-overlay.open {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      /* Toast Notification */
+      .toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(100px);
+        background: #0f172a;
+        color: #fff;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        z-index: 2000;
+        opacity: 0;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .toast.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+
+      .toast.warning {
+        background: #f59e0b;
+      }
+
+      .toast.error {
+        background: #ef4444;
+      }
+
+      .toast.success {
+        background: #22c55e;
+      }
+
+      /* Locked Hall Banner */
+      .locked-hall-banner {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+        border-bottom: 1px solid #c7d2fe;
+      }
+
+      .locked-hall-icon {
+        font-size: 14px;
+      }
+
+      .locked-hall-name {
+        flex: 1;
+        font-size: 13px;
+        font-weight: 600;
+        color: #4338ca;
+      }
+
+      .unlock-hall-btn {
+        background: #fff;
+        border: 1px solid #c7d2fe;
+        padding: 4px 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.15s ease;
+      }
+
+      .unlock-hall-btn:hover {
+        background: #fef2f2;
+        border-color: #fca5a5;
+      }
+
+      /* Date Banner */
+      .date-banner {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        padding: 8px 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        font-size: 13px;
+      }
+
+      .date-banner-icon {
+        font-size: 16px;
+      }
+
+      .date-banner-text {
+        font-weight: 600;
+      }
+
+      .date-banner-day {
+        font-weight: 400;
+        opacity: 0.9;
+      }
+
+      .weekend-notice {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+        margin-left: 8px;
+      }
     </style>
   </head>
   <body>
+    <!-- Date Banner -->
+    <div class="date-banner" id="dateBanner">
+      <span class="date-banner-icon">📅</span>
+      <span class="date-banner-text" id="dateText">Loading...</span>
+      <span class="date-banner-day" id="dayText"></span>
+      <span class="weekend-notice" id="weekendNotice" style="display: none;">
+        ⚠️ Weekend - No Breakfast Served
+      </span>
+    </div>
+
     <header>
-      <div><strong>SmartDine Finder</strong></div>
+      <a href="/" class="logo">
+        <div class="logo-mark">S</div>
+        <span>SmartDine</span>
+      </a>
       <nav>
         {% if user.is_authenticated %}
-          <a href="/">Home</a>
-          <a href="/menus/">Menu</a>
+          <a href="/" class="{% if request.path == '/' %}active{% endif %}">Home</a>
+          <a href="/menus/recommendations/" class="{% if 'recommendations' in request.path %}active{% endif %}">Recommendations</a>
+          <a href="/menus/" class="{% if 'menus' in request.path and 'recommendations' not in request.path %}active{% endif %}">Menus</a>
+          <a href="/survey/" class="{% if 'survey' in request.path %}active{% endif %}">Preferences</a>
+          <span class="nav-divider"></span>
+          <div class="user-badge">
+            <div class="user-avatar">{{ user.username|slice:":1"|upper }}</div>
+            <span>{{ user.username }}</span>
+          </div>
           <a href="/logout/">Logout</a>
         {% else %}
-          <a href="/login/">Login</a>
-          <a href="/register/">Register</a>
+          <a href="/login/" class="{% if 'login' in request.path %}active{% endif %}">Login</a>
+          <a href="/register/" class="{% if 'register' in request.path %}active{% endif %}">Register</a>
         {% endif %}
       </nav>
     </header>
     <main>
       {% block content %}{% endblock %}
     </main>
+
+    {% if user.is_authenticated %}
+    <!-- Selection Toggle Button -->
+    <button class="selection-toggle" id="selectionToggle" onclick="toggleSelectionSidebar()">
+      Today's Menu
+      <span class="badge" id="selectionBadge">0</span>
+    </button>
+
+    <!-- Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSelectionSidebar()"></div>
+
+    <!-- Selection Sidebar -->
+    <div class="selection-sidebar" id="selectionSidebar">
+      <div class="sidebar-header">
+        <h3>🍽 Today's Selection</h3>
+        <button class="sidebar-close" onclick="toggleSelectionSidebar()">✕</button>
+      </div>
+      <!-- Locked Hall Banner -->
+      <div class="locked-hall-banner" id="lockedHallBanner" style="display: none;">
+        <span class="locked-hall-icon">📍</span>
+        <span class="locked-hall-name" id="lockedHallName">-</span>
+        <button class="unlock-hall-btn" onclick="SelectionManager.unlockHall()" title="Unlock to select from other halls">🔓</button>
+      </div>
+      <div class="sidebar-body" id="selectionList">
+        <div class="selection-empty">
+          <div class="selection-empty-icon">🍽</div>
+          <p>No items selected yet.<br>Add dishes from Home or Menus!</p>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="calories-summary">
+          <span class="calories-label">Total Calories</span>
+          <span class="calories-value" id="totalCalories">0 kcal</span>
+        </div>
+        <button class="clear-selection" onclick="clearAllSelections()">Clear All Selections</button>
+      </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast" id="globalToast"></div>
+
+    <script>
+      // Global Selection Manager
+      const SelectionManager = {
+        STORAGE_KEY: 'todaySelection',
+        PREFS_KEY: 'userPreferences',
+        LOCKED_HALLS_KEY: 'lockedHalls', // Now stores per-meal-type locks: { breakfast: 'Hall', lunch: 'Hall', dinner: null }
+        syncDebounce: null,
+        
+        getSelections() {
+          try {
+            return JSON.parse(localStorage.getItem(this.STORAGE_KEY)) || [];
+          } catch { return []; }
+        },
+        
+        saveSelections(selections) {
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(selections));
+          this.updateUI();
+          // Dispatch event for other pages to listen
+          window.dispatchEvent(new CustomEvent('selectionChanged', { detail: selections }));
+          // Sync to server (debounced)
+          this.syncToServer();
+        },
+        
+        // Locked Hall Management - Per Meal Type
+        getLockedHalls() {
+          try {
+            return JSON.parse(localStorage.getItem(this.LOCKED_HALLS_KEY)) || {};
+          } catch { return {}; }
+        },
+        
+        getLockedHall(mealType) {
+          const locks = this.getLockedHalls();
+          return locks[mealType] || null;
+        },
+        
+        setLockedHall(mealType, hallName) {
+          const locks = this.getLockedHalls();
+          if (hallName) {
+            locks[mealType] = hallName;
+          } else {
+            delete locks[mealType];
+          }
+          localStorage.setItem(this.LOCKED_HALLS_KEY, JSON.stringify(locks));
+          this.updateUI();
+          window.dispatchEvent(new CustomEvent('hallLockChanged', { detail: locks }));
+        },
+        
+        unlockHall(mealType) {
+          if (confirm(`Unlock ${mealType}? You can then select from other halls for ${mealType}.`)) {
+            this.setLockedHall(mealType, null);
+            showGlobalToast(`🔓 ${mealType.charAt(0).toUpperCase() + mealType.slice(1)} unlocked`, 'success');
+          }
+        },
+        
+        unlockAllHalls() {
+          if (confirm('Unlock all meals? You can then select from any hall.')) {
+            localStorage.removeItem(this.LOCKED_HALLS_KEY);
+            this.updateUI();
+            showGlobalToast('🔓 All halls unlocked', 'success');
+          }
+        },
+        
+        checkHallLock(hallName, mealType) {
+          if (!mealType) return { allowed: true }; // No meal type specified, allow
+          const lockedHall = this.getLockedHall(mealType);
+          if (!lockedHall) return { allowed: true }; // No lock for this meal type
+          if (lockedHall === hallName) return { allowed: true }; // Same hall
+          return { allowed: false, lockedHall: lockedHall, mealType: mealType };
+        },
+        
+        // Sync selections to server database
+        syncToServer() {
+          // Debounce to avoid too many requests
+          if (this.syncDebounce) clearTimeout(this.syncDebounce);
+          this.syncDebounce = setTimeout(() => {
+            const selections = this.getSelections();
+            // Format meals for server
+            const meals = selections.map(item => ({
+              name: item.name,
+              calories: item.calories || 0,
+              diningHall: item.hall || 'Unknown',
+              mealType: this.guessMealType(),
+              addedAt: item.addedAt
+            }));
+            
+            // Send to server
+            fetch('/menus/history/save/', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': this.getCSRFToken()
+              },
+              body: JSON.stringify({ meals: meals })
+            })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                console.log('Meal history synced to server');
+              }
+            })
+            .catch(err => console.log('Sync error (offline?):', err));
+          }, 2000); // Wait 2 seconds before syncing
+        },
+        
+        getCSRFToken() {
+          // Try to get CSRF token from cookie or form
+          const cookieMatch = document.cookie.match(/csrftoken=([^;]+)/);
+          if (cookieMatch) return cookieMatch[1];
+          const tokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+          if (tokenInput) return tokenInput.value;
+          return '';
+        },
+        
+        guessMealType() {
+          const hour = new Date().getHours();
+          if (hour < 10) return 'breakfast';
+          if (hour < 15) return 'lunch';
+          return 'dinner';
+        },
+        
+        getUserPreferences() {
+          try {
+            return JSON.parse(localStorage.getItem(this.PREFS_KEY)) || { allergens: [], dietPreferences: [] };
+          } catch { return { allergens: [], dietPreferences: [] }; }
+        },
+        
+        setUserPreferences(prefs) {
+          localStorage.setItem(this.PREFS_KEY, JSON.stringify(prefs));
+        },
+        
+        checkConflict(dish) {
+          const prefs = this.getUserPreferences();
+          const conflicts = [];
+          
+          // Check allergens
+          if (prefs.allergens && prefs.allergens.length > 0) {
+            // First check if dish has an allergens array (preferred method)
+            if (dish.allergens && Array.isArray(dish.allergens)) {
+              prefs.allergens.forEach(allergen => {
+                if (dish.allergens.includes(allergen)) {
+                  conflicts.push({ type: 'allergen', name: allergen });
+                }
+              });
+            } else if (dish.ingredients) {
+              // Fallback to ingredients check
+              const ingredients = dish.ingredients.toLowerCase();
+              const allergenMap = {
+                'dairy': ['milk', 'cheese', 'cream', 'butter', 'yogurt', 'mozzarella', 'parmesan', 'ricotta', 'mascarpone', 'feta'],
+                'gluten': ['wheat', 'bread', 'pasta', 'noodle', 'flour', 'crouton', 'tortilla', 'bun', 'pita', 'ladyfinger'],
+                'nuts': ['peanut', 'almond', 'walnut', 'cashew', 'pecan', 'hazelnut'],
+                'shellfish': ['shrimp', 'crab', 'lobster', 'clam', 'mussel', 'oyster'],
+                'soy': ['soy', 'tofu', 'edamame', 'miso'],
+                'eggs': ['egg'],
+                'fish': ['fish', 'salmon', 'tuna', 'cod', 'anchovy']
+              };
+              
+              prefs.allergens.forEach(allergen => {
+                const keywords = allergenMap[allergen] || [allergen];
+                if (keywords.some(kw => ingredients.includes(kw))) {
+                  conflicts.push({ type: 'allergen', name: allergen });
+                }
+              });
+            }
+          }
+          
+          return conflicts;
+        },
+        
+        addItem(dish) {
+          // Check for allergen conflicts first
+          const conflicts = this.checkConflict(dish);
+          if (conflicts.length > 0) {
+            const allergenNames = conflicts.map(c => c.name).join(', ');
+            showGlobalToast(`⚠️ Cannot add: contains ${allergenNames} (allergen)`, 'error');
+            return false;
+          }
+          
+          // Get meal type and hall name
+          const hallName = dish.hall || 'Unknown';
+          const mealType = dish.mealType || this.guessMealType();
+          
+          // Check for hall lock (per meal type)
+          const lockCheck = this.checkHallLock(hallName, mealType);
+          if (!lockCheck.allowed) {
+            const mealLabel = lockCheck.mealType.charAt(0).toUpperCase() + lockCheck.mealType.slice(1);
+            showGlobalToast(`⚠️ ${mealLabel} is locked to ${lockCheck.lockedHall}. Clear ${mealLabel.toLowerCase()} items or unlock to choose from ${hallName}.`, 'error');
+            return false;
+          }
+          
+          const selections = this.getSelections();
+          // Check if already exists
+          if (selections.find(s => s.name === dish.name && s.hall === dish.hall && s.mealType === mealType)) {
+            showGlobalToast('Already in your selection', 'warning');
+            return false;
+          }
+          
+          // Lock this meal type to this hall (first item for this meal type)
+          const existingForMeal = selections.filter(s => s.mealType === mealType);
+          if (existingForMeal.length === 0) {
+            this.setLockedHall(mealType, hallName);
+          }
+          
+          selections.push({
+            name: dish.name,
+            calories: dish.calories,
+            hall: hallName,
+            mealType: mealType,
+            color: dish.color || '#6366f1',
+            addedAt: Date.now()
+          });
+          
+          this.saveSelections(selections);
+          showGlobalToast(`✓ Added ${dish.name} to ${mealType}`, 'success');
+          return true;
+        },
+        
+        removeItem(index) {
+          const selections = this.getSelections();
+          if (index >= 0 && index < selections.length) {
+            const removed = selections.splice(index, 1);
+            
+            // Check if we need to unlock this meal type
+            const mealType = removed[0].mealType;
+            const remainingForMeal = selections.filter(s => s.mealType === mealType);
+            if (remainingForMeal.length === 0) {
+              this.setLockedHall(mealType, null); // Unlock this meal type
+            }
+            
+            this.saveSelections(selections);
+            showGlobalToast(`Removed ${removed[0].name}`, 'warning');
+          }
+        },
+        
+        clearAll() {
+          this.saveSelections([]);
+          localStorage.removeItem(this.LOCKED_HALLS_KEY); // Clear all locks
+          showGlobalToast('All selections cleared', 'warning');
+        },
+        
+        getTotalCalories() {
+          return this.getSelections().reduce((sum, item) => sum + (item.calories || 0), 0);
+        },
+        
+        updateUI() {
+          const selections = this.getSelections();
+          const lockedHalls = this.getLockedHalls();
+          const badge = document.getElementById('selectionBadge');
+          const list = document.getElementById('selectionList');
+          const totalCal = document.getElementById('totalCalories');
+          const lockedBanner = document.getElementById('lockedHallBanner');
+          const lockedName = document.getElementById('lockedHallName');
+          
+          if (badge) badge.textContent = selections.length;
+          
+          // Update locked hall banner - show per-meal locks
+          if (lockedBanner && lockedName) {
+            const lockEntries = Object.entries(lockedHalls);
+            if (lockEntries.length > 0 && selections.length > 0) {
+              lockedBanner.style.display = 'flex';
+              const lockText = lockEntries.map(([meal, hall]) => {
+                const mealIcon = meal === 'breakfast' ? '🌅' : meal === 'lunch' ? '☀️' : '🌙';
+                return `${mealIcon} ${hall}`;
+              }).join(' • ');
+              lockedName.textContent = lockText;
+            } else {
+              lockedBanner.style.display = 'none';
+            }
+          }
+          
+          if (list) {
+            if (selections.length === 0) {
+              list.innerHTML = `
+                <div class="selection-empty">
+                  <div class="selection-empty-icon">🍽</div>
+                  <p>No items selected yet.<br>Add dishes from Home or Menus!</p>
+                </div>
+              `;
+            } else {
+              // Group selections by meal type
+              const grouped = { breakfast: [], lunch: [], dinner: [] };
+              selections.forEach((item, i) => {
+                const mealType = item.mealType || 'lunch';
+                if (!grouped[mealType]) grouped[mealType] = [];
+                grouped[mealType].push({ ...item, index: i });
+              });
+              
+              const mealIcons = { breakfast: '🌅', lunch: '☀️', dinner: '🌙' };
+              const mealLabels = { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner' };
+              
+              let html = '';
+              ['breakfast', 'lunch', 'dinner'].forEach(mealType => {
+                const items = grouped[mealType] || [];
+                if (items.length > 0) {
+                  const lockedHall = lockedHalls[mealType];
+                  html += `
+                    <div class="meal-group">
+                      <div class="meal-group-header">
+                        <span class="meal-group-icon">${mealIcons[mealType]}</span>
+                        <span class="meal-group-label">${mealLabels[mealType]}</span>
+                        ${lockedHall ? `<span class="meal-group-hall">${lockedHall}</span>` : ''}
+                      </div>
+                      <div class="meal-group-items">
+                  `;
+                  items.forEach(item => {
+                    html += `
+                      <div class="selection-item">
+                        <div class="selection-item-color" style="background: ${item.color}"></div>
+                        <div class="selection-item-info">
+                          <div class="selection-item-name">${item.name}</div>
+                          <div class="selection-item-meta">${item.calories} kcal</div>
+                        </div>
+                        <button class="selection-item-remove" onclick="SelectionManager.removeItem(${item.index})">✕</button>
+                      </div>
+                    `;
+                  });
+                  html += `</div></div>`;
+                }
+              });
+              
+              list.innerHTML = html;
+            }
+          }
+          
+          if (totalCal) {
+            totalCal.textContent = this.getTotalCalories() + ' kcal';
+          }
+        }
+      };
+
+      function toggleSelectionSidebar() {
+        const sidebar = document.getElementById('selectionSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('open');
+      }
+
+      function clearAllSelections() {
+        if (confirm('Clear all selections?')) {
+          SelectionManager.clearAll();
+        }
+      }
+
+      function showGlobalToast(message, type = 'info') {
+        const toast = document.getElementById('globalToast');
+        if (toast) {
+          toast.textContent = message;
+          toast.className = 'toast show ' + type;
+          setTimeout(() => { toast.className = 'toast'; }, 3000);
+        }
+      }
+
+      // Date and Weekend Logic
+      function updateDateBanner() {
+        const now = new Date();
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        const dateStr = now.toLocaleDateString('en-US', options);
+        const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' });
+        const dayNum = now.getDay(); // 0 = Sunday, 6 = Saturday
+        
+        document.getElementById('dateText').textContent = dateStr;
+        document.getElementById('dayText').textContent = `(${dayOfWeek})`;
+        
+        // Check if weekend
+        const isWeekend = (dayNum === 0 || dayNum === 6);
+        const weekendNotice = document.getElementById('weekendNotice');
+        if (weekendNotice) {
+          weekendNotice.style.display = isWeekend ? 'inline-flex' : 'none';
+        }
+        
+        // Store in window for other scripts to use
+        window.isWeekend = isWeekend;
+        window.currentDayOfWeek = dayOfWeek;
+        
+        // Dispatch event for pages to react
+        window.dispatchEvent(new CustomEvent('dateUpdated', { 
+          detail: { isWeekend, dayOfWeek, date: dateStr } 
+        }));
+      }
+
+      // Initialize on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        updateDateBanner();
+        SelectionManager.updateUI();
+      });
+
+      // Listen for changes from other tabs/pages
+      window.addEventListener('storage', function(e) {
+        if (e.key === SelectionManager.STORAGE_KEY) {
+          SelectionManager.updateUI();
+        }
+      });
+    </script>
+    {% endif %}
   </body>
 </html>

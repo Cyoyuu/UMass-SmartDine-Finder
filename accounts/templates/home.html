@@ -1,14 +1,1885 @@
 {% extends "base.html" %}
 {% block content %}
-  {% if user.is_authenticated %}
-    <h1>Welcome back, {{ user.username }}!</h1>
-    <p>Use the navigation menu above to access the dining hall menus.</p>
-  {% else %}
-    <h1>Welcome to SmartDine Finder 🍽️</h1>
-    <p>Discover your perfect dining hall experience.</p>
-    <div class="links">
-      <a class="btn" href="/login/">Login</a>
-      <a class="btn btn-outline" href="/register/">Register</a>
+
+<style>
+  main {
+    max-width: 1200px !important;
+    padding: 20px !important;
+    background: transparent !important;
+    border: none !important;
+  }
+
+  .home-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 24px;
+    min-height: calc(100vh - 140px);
+  }
+
+  /* Left: Bubble Visualization */
+  .bubble-section {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .section-header {
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .section-header-left {
+    flex: 1;
+  }
+
+  .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 4px 0;
+  }
+
+  .section-subtitle {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+  }
+
+  /* Dining Hall Tabs */
+  .hall-tabs {
+    display: flex;
+    gap: 6px;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 10px;
+  }
+
+  /* Meal Type Tabs */
+  .meal-tabs {
+    display: flex;
+    gap: 4px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    padding: 3px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+
+  .meal-tab {
+    padding: 6px 12px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .meal-tab:hover {
+    background: rgba(99, 102, 241, 0.1);
+    color: #4f46e5;
+  }
+
+  .meal-tab.active {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+  }
+
+  .meal-tab.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .weekend-breakfast-notice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #fbbf24;
+    border-radius: 8px;
+    color: #92400e;
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+
+  .meal-tab-icon {
+    font-size: 11px;
+  }
+
+  .hall-tab {
+    padding: 8px 14px;
+    border: none;
+    background: transparent;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .hall-tab:hover {
+    color: #475569;
+    background: rgba(255,255,255,0.5);
+  }
+
+  .hall-tab.active {
+    background: #fff;
+    color: #6366f1;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  .bubble-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    background: linear-gradient(145deg, #1e293b 0%, #334155 50%, #1e293b 100%);
+    min-height: 450px;
+  }
+
+  .bubble {
+    position: absolute;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .bubble::before {
+    content: '';
+    position: absolute;
+    top: 12%;
+    left: 18%;
+    width: 25%;
+    height: 15%;
+    background: rgba(255,255,255,0.25);
+    border-radius: 50%;
+    filter: blur(3px);
+  }
+
+  .bubble:hover {
+    transform: scale(1.15) !important;
+    z-index: 100;
+  }
+
+  .bubble-content {
+    padding: 8px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .bubble-name {
+    font-size: 10px;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    line-height: 1.2;
+    font-weight: 600;
+  }
+
+  .bubble-count {
+    font-size: 12px;
+    color: rgba(255,255,255,0.9);
+    margin-top: 2px;
+    font-weight: 700;
+  }
+
+  /* Dish Info Card */
+  .dish-card {
+    position: fixed;
+    z-index: 1000;
+    background: rgba(255,255,255,0.98);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.1);
+    width: 280px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+    transform: scale(0.9);
+  }
+
+  .dish-card.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: scale(1);
+  }
+
+  .dish-card-header {
+    padding: 16px 18px;
+    border-radius: 16px 16px 0 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dish-card-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.9;
+  }
+
+  .dish-card-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 4px 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .dish-card-calories {
+    font-size: 13px;
+    color: rgba(255,255,255,0.9);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .dish-card-body {
+    padding: 16px 18px;
+  }
+
+  .dish-card-section {
+    margin-bottom: 14px;
+  }
+
+  .dish-card-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .dish-card-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 8px;
+  }
+
+  .dish-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .dish-card-tag {
+    padding: 4px 10px;
+    background: #f1f5f9;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #475569;
+  }
+
+  .dish-card-tag.pref {
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    color: #6366f1;
+  }
+
+  .dish-card-ingredients {
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.6;
+  }
+
+  .dish-card-count {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dish-card-count-bar {
+    flex: 1;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .dish-card-count-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+
+  .dish-card-count-num {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    min-width: 60px;
+    text-align: right;
+  }
+
+  .dish-card-actions {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .add-to-selection {
+    width: 100%;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .add-to-selection:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  }
+
+  .add-to-selection:disabled {
+    background: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .add-to-selection.added {
+    background: #22c55e;
+  }
+
+  .allergen-warning {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    font-size: 11px;
+    color: #dc2626;
+    margin-top: 8px;
+  }
+
+  /* Top 5 Ranking */
+  .top-ranking {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 14px 18px;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    align-items: center;
+  }
+
+  .ranking-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+    padding-right: 8px;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .ranking-list {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+    overflow-x: auto;
+  }
+
+  .ranking-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+    cursor: pointer;
+  }
+
+  .ranking-item:hover {
+    background: #eef2ff;
+  }
+
+  .ranking-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .ranking-num.n1 { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); }
+  .ranking-num.n2 { background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%); }
+  .ranking-num.n3 { background: linear-gradient(135deg, #cd7f32 0%, #b8860b 100%); }
+  .ranking-num.n4, .ranking-num.n5 { background: #cbd5e1; color: #475569; }
+
+  .ranking-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ranking-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #0f172a;
+    line-height: 1.2;
+  }
+
+  .ranking-count {
+    font-size: 10px;
+    color: #64748b;
+  }
+
+  /* Right: Info Cards */
+  .info-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .info-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 16px 18px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .card-icon.special { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); }
+  .card-icon.history { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
+  .card-icon.welcome { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0;
+  }
+
+  .card-body {
+    padding: 16px 18px;
+  }
+
+  /* Special Event Card */
+  .event-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border-radius: 10px;
+    margin-bottom: 10px;
+  }
+
+  .event-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .event-badge {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .event-day {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+  }
+
+  .event-month {
+    font-size: 9px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.8);
+    text-transform: uppercase;
+  }
+
+  .event-info {
+    flex: 1;
+  }
+
+  .event-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #92400e;
+    margin: 0 0 4px 0;
+  }
+
+  .event-desc {
+    font-size: 11px;
+    color: #a16207;
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .event-location {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    font-size: 10px;
+    color: #b45309;
+    background: rgba(251, 191, 36, 0.3);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  /* Last Meal Card */
+  .last-meal-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .meal-detail {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .meal-label {
+    font-size: 11px;
+    color: #94a3b8;
+  }
+
+  .meal-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  .meal-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .meal-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+  }
+
+  .meal-item-name {
+    font-size: 13px;
+    color: #374151;
+  }
+
+  .meal-item-cal {
+    font-size: 12px;
+    color: #6366f1;
+    font-weight: 600;
+  }
+
+  .meal-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    padding: 12px;
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    border-radius: 8px;
+  }
+
+  .meal-total-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4f46e5;
+  }
+
+  .meal-total-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: #4f46e5;
+  }
+
+  .last-meal-loading {
+    text-align: center;
+    padding: 20px;
+    color: #94a3b8;
+    font-size: 13px;
+  }
+
+  .last-meal-empty {
+    text-align: center;
+    padding: 20px;
+    color: #94a3b8;
+  }
+
+  .last-meal-empty-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+    opacity: 0.5;
+  }
+
+  .last-meal-empty-text {
+    font-size: 13px;
+    margin: 0;
+  }
+
+  /* Last Selection - Grouped by Meal Type */
+  .last-meal-date {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 12px;
+  }
+
+  .date-icon {
+    font-size: 14px;
+  }
+
+  .date-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .total-cal {
+    margin-left: auto;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4f46e5;
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    padding: 4px 10px;
+    border-radius: 12px;
+  }
+
+  .meal-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .meal-section-group {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  .meal-section-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .meal-type-icon {
+    font-size: 12px;
+  }
+
+  .meal-type-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+  }
+
+  .meal-hall-tag {
+    margin-left: auto;
+    font-size: 10px;
+    color: #64748b;
+    background: #e2e8f0;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  .meal-section-items {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .meal-item-compact {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 12px;
+  }
+
+  .meal-item-compact .item-name {
+    color: #334155;
+  }
+
+  .meal-item-compact .item-cal {
+    color: #94a3b8;
+    font-size: 11px;
+  }
+
+  /* Welcome Card for non-authenticated */
+  .welcome-card .card-body {
+    text-align: center;
+    padding: 30px 20px;
+  }
+
+  .welcome-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 8px 0;
+  }
+
+  .welcome-text {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0 0 20px 0;
+    line-height: 1.5;
+  }
+
+  .welcome-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-primary {
+    background: #6366f1;
+    color: #fff;
+    border: none;
+  }
+
+  .btn-primary:hover {
+    background: #4f46e5;
+  }
+
+  .btn-outline {
+    background: #fff;
+    color: #6366f1;
+    border: 1px solid #6366f1;
+  }
+
+  .btn-outline:hover {
+    background: #eef2ff;
+  }
+
+  /* Quick Actions */
+  .quick-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .quick-action {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+
+  .quick-action:hover {
+    background: #eef2ff;
+    border-color: #c7d2fe;
+    color: #6366f1;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .home-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .bubble-section {
+      min-height: 350px;
+    }
+
+    .info-section {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+
+    .info-card {
+      flex: 1;
+      min-width: 280px;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .info-section {
+      flex-direction: column;
+    }
+
+    .info-card {
+      min-width: auto;
+    }
+  }
+</style>
+
+<div class="home-grid">
+  <!-- Left: Bubble Visualization -->
+  <div class="bubble-section">
+    <div class="section-header">
+      <div class="section-header-left">
+        <h2 class="section-title">Trending Dishes</h2>
+        <p class="section-subtitle">Most popular picks this week</p>
+      </div>
+      <div class="hall-tabs" id="hallTabs">
+        {% for hall_name in dining_halls_list %}
+        <button class="hall-tab {% if forloop.first %}active{% endif %}" data-hall="{{ hall_name|lower }}">{{ hall_name }}</button>
+        {% endfor %}
+      </div>
     </div>
-  {% endif %}
+    <!-- Meal Type Tabs -->
+    <div class="meal-tabs" id="mealTabs">
+      <button class="meal-tab active" data-meal="lunch">
+        <span class="meal-tab-icon"></span> Lunch
+      </button>
+      <button class="meal-tab" data-meal="breakfast" id="breakfastTab">
+        <span class="meal-tab-icon"></span> Breakfast
+      </button>
+      <button class="meal-tab" data-meal="dinner">
+        <span class="meal-tab-icon"></span> Dinner
+      </button>
+    </div>
+    <!-- Weekend No Breakfast Notice -->
+    <div class="weekend-breakfast-notice" id="weekendBreakfastNotice" style="display: none;">
+      <span></span> It's the weekend! Dining halls don't serve breakfast on Saturdays and Sundays.
+    </div>
+    <div class="bubble-container" id="bubbleContainer">
+      <!-- Bubbles will be generated by JavaScript -->
+    </div>
+    <div class="top-ranking" id="topRanking">
+      <span class="ranking-label">🏆 Top 5</span>
+      <div class="ranking-list" id="rankingList">
+        <!-- Ranking items will be generated by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Dish Info Card -->
+  <div class="dish-card" id="dishCard">
+    <div class="dish-card-header" id="dishCardHeader">
+      <h4 class="dish-card-name" id="dishCardName">Dish Name</h4>
+      <div class="dish-card-calories">🔥 <span id="dishCardCalories">0</span> kcal</div>
+    </div>
+    <div class="dish-card-body">
+      <div class="dish-card-section">
+        <div class="dish-card-label">Diet Categories</div>
+        <div class="dish-card-tags" id="dishCardTags"></div>
+      </div>
+      <div class="dish-card-section">
+        <div class="dish-card-label">Ingredients</div>
+        <div class="dish-card-ingredients" id="dishCardIngredients"></div>
+      </div>
+      <div class="dish-card-section">
+        <div class="dish-card-label">Weekly Selections</div>
+        <div class="dish-card-count">
+          <div class="dish-card-count-bar">
+            <div class="dish-card-count-fill" id="dishCardCountFill"></div>
+          </div>
+          <span class="dish-card-count-num" id="dishCardCountNum">0</span>
+        </div>
+      </div>
+      <div class="dish-card-actions">
+        <button class="add-to-selection" id="addToSelectionBtn" onclick="addCurrentDishToSelection()">
+          <span>+</span> Add to Today's Menu
+        </button>
+        <div class="allergen-warning" id="allergenWarning" style="display: none;">
+          <span>⚠️</span>
+          <span id="allergenWarningText">Contains allergens</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Info Cards -->
+  <div class="info-section">
+    {% if user.is_authenticated %}
+    <!-- Special Events Card -->
+    <div class="info-card">
+      <div class="card-header">
+        <div class="card-icon special">✨</div>
+        <h3 class="card-title">Special Events</h3>
+      </div>
+      <div class="card-body">
+        <div class="event-item">
+          <div class="event-badge">
+            <span class="event-day">8</span>
+            <span class="event-month">Dec</span>
+          </div>
+          <div class="event-info">
+            <h4 class="event-title">With Gueset Chef James Bickmore-Hutt</h4>
+            <p class="event-desc">5:00 - 9:00 PM</p>
+            <span class="event-location">📍 Worcester DC</span>
+          </div>
+        </div>
+        <div class="event-item">
+          <div class="event-badge">
+            <span class="event-day">Wed</span>
+            <span class="event-month">Dec</span>
+          </div>
+          <div class="event-info">
+            <h4 class="event-title">Ramen Pop-Ups</h4>
+            <p class="event-desc">Wednesday at STAR GINGER'S noodle bowl station</p>
+            <span class="event-location">📍 Blue Wall, Campus Center</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Last Meal Card -->
+    <div class="info-card">
+      <div class="card-header">
+        <div class="card-icon history">🍽</div>
+        <h3 class="card-title">Your Last Selection</h3>
+      </div>
+      <div class="card-body" id="lastSelectionBody">
+        <div class="last-meal-loading">
+          <span>Loading...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="info-card">
+      <div class="card-body" style="padding: 14px 18px;">
+        <div class="quick-actions">
+          <a href="/menus/recommendations/" class="quick-action">
+            🎯 Get Recommendations
+          </a>
+          <a href="/menus/" class="quick-action">
+            📋 View Menus
+          </a>
+        </div>
+      </div>
+    </div>
+
+    {% else %}
+    <!-- Welcome Card for non-authenticated users -->
+    <div class="info-card welcome-card">
+      <div class="card-header">
+        <div class="card-icon welcome">🍽</div>
+        <h3 class="card-title">SmartDine Finder</h3>
+      </div>
+      <div class="card-body">
+        <h2 class="welcome-title">Welcome!</h2>
+        <p class="welcome-text">
+          Discover personalized dining recommendations based on your preferences. 
+          Track your nutrition and find the perfect meal at UMass dining halls.
+        </p>
+        <div class="welcome-actions">
+          <a href="/login/" class="btn btn-primary">Login</a>
+          <a href="/register/" class="btn btn-outline">Register</a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  // Softer bubble colors (less bright)
+  const bubbleColors = [
+    { bg: 'linear-gradient(135deg, #5b6ee1 0%, #6b5b95 100%)' },
+    { bg: 'linear-gradient(135deg, #e07a9a 0%, #d45d79 100%)' },
+    { bg: 'linear-gradient(135deg, #4a9ebb 0%, #2d7d9a 100%)' },
+    { bg: 'linear-gradient(135deg, #4aba7a 0%, #2d9a6a 100%)' },
+    { bg: 'linear-gradient(135deg, #e8a87c 0%, #d4845d 100%)' },
+    { bg: 'linear-gradient(135deg, #7eb8c9 0%, #5a9ab0 100%)' },
+    { bg: 'linear-gradient(135deg, #c9a7c7 0%, #a080a0 100%)' },
+    { bg: 'linear-gradient(135deg, #9bc4bc 0%, #7aa89f 100%)' },
+    { bg: 'linear-gradient(135deg, #8b7fb0 0%, #6b5f90 100%)' },
+    { bg: 'linear-gradient(135deg, #7ab8a8 0%, #5a9888 100%)' },
+  ];
+
+  const prefLabels = {
+    'vegetarian': 'Vegetarian',
+    'plant_based': 'Plant Based',
+    'halal': 'Halal',
+    'whole_grain': 'Whole Grain',
+    'local': 'Local',
+    'sustainable': 'Sustainable',
+    'antibiotic_free': 'Antibiotic Free'
+  };
+
+  // Dishes data per dining hall, organized by meal type
+  // Data structure matches menus.json - includes allergens for conflict checking
+  // Load dining hall data from Django template (from database)
+  const diningHallData = {{ dining_hall_data|safe }};
+
+  // Initialize with first dining hall from database
+  let currentHall = '{{ dining_halls_list.0|lower }}' || 'worcester';
+  let currentMeal = 'lunch';
+  let currentDishes = [];
+  let bubbleData = [];
+  let bubbleElements = [];
+  let animationId = null;
+  let containerWidth = 0;
+  let containerHeight = 0;
+
+  // Initialize hall tabs
+  function initHallTabs() {
+    const tabs = document.querySelectorAll('.hall-tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentHall = tab.dataset.hall;
+        hideDishCard();
+        generateVisualization();
+      });
+    });
+  }
+
+  // Initialize meal tabs
+  function initMealTabs() {
+    const tabs = document.querySelectorAll('.meal-tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentMeal = tab.dataset.meal;
+        hideDishCard();
+        generateVisualization();
+      });
+    });
+  }
+
+  function generateVisualization() {
+    const container = document.getElementById('bubbleContainer');
+    
+    if (animationId) cancelAnimationFrame(animationId);
+    container.querySelectorAll('.bubble').forEach(b => b.remove());
+    
+    const hallData = diningHallData[currentHall] || {};
+    currentDishes = hallData[currentMeal] || [];
+    
+    const rect = container.getBoundingClientRect();
+    containerWidth = rect.width;
+    containerHeight = rect.height;
+    
+    const maxCount = Math.max(...currentDishes.map(d => d.count));
+    const minCount = Math.min(...currentDishes.map(d => d.count));
+    const minSize = 80;  // Smaller minimum for more contrast
+    const maxSize = 140; // Larger maximum for more contrast
+    
+    bubbleData = [];
+    bubbleElements = [];
+    
+    currentDishes.forEach((dish, index) => {
+      // Use normalized ratio with power function for more dramatic size difference
+      const normalizedRatio = (dish.count - minCount) / (maxCount - minCount || 1);
+      // Use power of 1.5 to make high counts even bigger
+      const sizeRatio = Math.pow(normalizedRatio, 1.5);
+      const size = minSize + (maxSize - minSize) * sizeRatio;
+      
+      // Random initial position across the container
+      let x = Math.random() * (containerWidth - size - 30) + 15;
+      let y = Math.random() * (containerHeight - size - 30) + 15;
+      
+      // Resolve overlaps
+      let attempts = 0;
+      while (isOverlapping(x, y, size, bubbleData) && attempts < 100) {
+        x = Math.random() * (containerWidth - size - 30) + 15;
+        y = Math.random() * (containerHeight - size - 30) + 15;
+        attempts++;
+      }
+      
+      // Random velocity for free floating
+      const speed = 0.3 + Math.random() * 0.4;
+      const angle = Math.random() * 2 * Math.PI;
+      
+      const bubbleInfo = { 
+        ...dish, x, y, size, index,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        baseX: x,
+        baseY: y,
+        phase: Math.random() * Math.PI * 2
+      };
+      bubbleData.push(bubbleInfo);
+      
+      // Create bubble element (softer style)
+      const colorSet = bubbleColors[index % bubbleColors.length];
+      
+      // Dynamic font sizes based on bubble size
+      const nameFontSize = Math.max(9, Math.min(13, size * 0.11));
+      const countFontSize = Math.max(10, Math.min(15, size * 0.13));
+      
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.dataset.index = index;
+      bubble.style.cssText = `
+        left: ${x}px;
+        top: ${y}px;
+        width: ${size}px;
+        height: ${size}px;
+        background: ${colorSet.bg};
+        box-shadow: 0 4px 20px rgba(0,0,0,0.25), inset 0 -3px 10px rgba(0,0,0,0.1);
+      `;
+      
+      bubble.innerHTML = `
+        <div class="bubble-content">
+          <div class="bubble-name" style="font-size: ${nameFontSize}px">${dish.name}</div>
+          <div class="bubble-count" style="font-size: ${countFontSize}px">${dish.count}</div>
+        </div>
+      `;
+      
+      bubble.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showDishCard(bubbleInfo, e, colorSet);
+      });
+      
+      container.appendChild(bubble);
+      bubbleElements.push(bubble);
+    });
+    
+    generateRanking();
+    animate();
+  }
+
+  function animate() {
+    const time = Date.now() * 0.001;
+    
+    bubbleData.forEach((bubble, index) => {
+      // Floating wave motion
+      const waveX = Math.sin(time * 0.6 + bubble.phase) * 10;
+      const waveY = Math.cos(time * 0.5 + bubble.phase * 1.2) * 8;
+      
+      // Random velocity changes for free floating
+      bubble.vx += (Math.random() - 0.5) * 0.02;
+      bubble.vy += (Math.random() - 0.5) * 0.02;
+      
+      // Damping
+      bubble.vx *= 0.98;
+      bubble.vy *= 0.98;
+      
+      // Speed limit
+      const maxSpeed = 0.6;
+      const speed = Math.sqrt(bubble.vx * bubble.vx + bubble.vy * bubble.vy);
+      if (speed > maxSpeed) {
+        bubble.vx = (bubble.vx / speed) * maxSpeed;
+        bubble.vy = (bubble.vy / speed) * maxSpeed;
+      }
+      
+      // Update base position
+      bubble.baseX += bubble.vx;
+      bubble.baseY += bubble.vy;
+      
+      // Bounce off walls with proper edge detection
+      const margin = 10;
+      const maxX = containerWidth - bubble.size - margin;
+      const maxY = containerHeight - bubble.size - margin;
+      
+      // Left edge
+      if (bubble.baseX < margin) { 
+        bubble.baseX = margin; 
+        bubble.vx = Math.abs(bubble.vx) * 0.8; // Dampen on bounce
+      }
+      // Right edge
+      if (bubble.baseX > maxX) { 
+        bubble.baseX = maxX; 
+        bubble.vx = -Math.abs(bubble.vx) * 0.8;
+      }
+      // Top edge
+      if (bubble.baseY < margin) { 
+        bubble.baseY = margin; 
+        bubble.vy = Math.abs(bubble.vy) * 0.8;
+      }
+      // Bottom edge
+      if (bubble.baseY > maxY) { 
+        bubble.baseY = maxY; 
+        bubble.vy = -Math.abs(bubble.vy) * 0.8;
+      }
+      
+      // Collision avoidance
+      bubbleData.forEach((other, otherIndex) => {
+        if (index === otherIndex) return;
+        
+        const cx1 = bubble.baseX + bubble.size / 2;
+        const cy1 = bubble.baseY + bubble.size / 2;
+        const cx2 = other.baseX + other.size / 2;
+        const cy2 = other.baseY + other.size / 2;
+        
+        const dx = cx2 - cx1;
+        const dy = cy2 - cy1;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const minDist = (bubble.size + other.size) / 2 + 6;
+        
+        if (dist < minDist && dist > 0) {
+          const pushStrength = (minDist - dist) * 0.02;
+          const nx = dx / dist;
+          const ny = dy / dist;
+          bubble.vx -= nx * pushStrength;
+          bubble.vy -= ny * pushStrength;
+        }
+      });
+      
+      // Final position with wave
+      bubble.x = bubble.baseX + waveX;
+      bubble.y = bubble.baseY + waveY;
+      
+      // Keep within bounds
+      bubble.x = Math.max(4, Math.min(containerWidth - bubble.size - 4, bubble.x));
+      bubble.y = Math.max(4, Math.min(containerHeight - bubble.size - 4, bubble.y));
+      
+      // Update element
+      const elem = bubbleElements[index];
+      if (elem) {
+        elem.style.left = `${bubble.x}px`;
+        elem.style.top = `${bubble.y}px`;
+      }
+    });
+    
+    animationId = requestAnimationFrame(animate);
+  }
+
+  function generateRanking() {
+    const list = document.getElementById('rankingList');
+    list.innerHTML = '';
+    
+    // Sort by count and get top 5
+    const sorted = [...currentDishes].sort((a, b) => b.count - a.count).slice(0, 5);
+    
+    sorted.forEach((dish, i) => {
+      const item = document.createElement('div');
+      item.className = 'ranking-item';
+      item.innerHTML = `
+        <div class="ranking-num n${i + 1}">${i + 1}</div>
+        <div class="ranking-info">
+          <span class="ranking-name">${dish.name}</span>
+          <span class="ranking-count">${dish.count} picks</span>
+        </div>
+      `;
+      item.addEventListener('click', () => {
+        // Find and highlight the corresponding bubble
+        const bubbleIndex = currentDishes.findIndex(d => d.name === dish.name);
+        if (bubbleIndex >= 0 && bubbleElements[bubbleIndex]) {
+          const bubble = bubbleElements[bubbleIndex];
+          bubble.style.transform = 'scale(1.3)';
+          setTimeout(() => { bubble.style.transform = ''; }, 600);
+        }
+      });
+      list.appendChild(item);
+    });
+  }
+
+  function isOverlapping(x, y, size, existing) {
+    for (const b of existing) {
+      const dx = x + size/2 - (b.x + b.size/2);
+      const dy = y + size/2 - (b.y + b.size/2);
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < (size + b.size) / 2 + 8) return true;
+    }
+    return false;
+  }
+
+  // Current dish being viewed
+  let currentViewingDish = null;
+  let currentViewingColor = null;
+
+  // Get hall name mapping
+  const hallNames = {
+    'worcester': 'Worcester',
+    'hampshire': 'Hampshire',
+    'berkshire': 'Berkshire',
+    'franklin': 'Franklin'
+  };
+
+  function showDishCard(dish, event, colorSet) {
+    currentViewingDish = dish;
+    currentViewingColor = colorSet;
+    
+    const card = document.getElementById('dishCard');
+    const header = document.getElementById('dishCardHeader');
+    const maxCount = Math.max(...currentDishes.map(d => d.count));
+    
+    header.style.background = colorSet.bg;
+    document.getElementById('dishCardName').textContent = dish.name;
+    document.getElementById('dishCardCalories').textContent = dish.calories;
+    document.getElementById('dishCardIngredients').textContent = dish.ingredients;
+    
+    const fill = document.getElementById('dishCardCountFill');
+    fill.style.width = `${(dish.count / maxCount) * 100}%`;
+    fill.style.background = colorSet.bg;
+    
+    document.getElementById('dishCardCountNum').textContent = `${dish.count} picks`;
+    
+    document.getElementById('dishCardTags').innerHTML = dish.preferences.map(p => 
+      `<span class="dish-card-tag pref">${prefLabels[p]}</span>`
+    ).join('');
+    
+    // Check for allergen conflicts
+    const addBtn = document.getElementById('addToSelectionBtn');
+    const warning = document.getElementById('allergenWarning');
+    const warningText = document.getElementById('allergenWarningText');
+    
+    if (typeof SelectionManager !== 'undefined') {
+      const hallName = hallNames[currentHall];
+      const mealType = currentMeal;
+      
+      const conflicts = SelectionManager.checkConflict({
+        ...dish,
+        hall: hallName
+      });
+      
+      // Check if already in selection for this meal type
+      const selections = SelectionManager.getSelections();
+      const alreadyAdded = selections.find(s => s.name === dish.name && s.hall === hallName && s.mealType === mealType);
+      
+      // Check hall lock for this meal type
+      const lockCheck = SelectionManager.checkHallLock(hallName, mealType);
+      
+      if (conflicts.length > 0) {
+        const allergenNames = conflicts.map(c => c.name).join(', ');
+        addBtn.disabled = true;
+        addBtn.innerHTML = '⚠️ Cannot Add';
+        warning.style.display = 'flex';
+        warningText.textContent = `Contains: ${allergenNames} (your allergen)`;
+      } else if (!lockCheck.allowed) {
+        const mealLabel = lockCheck.mealType.charAt(0).toUpperCase() + lockCheck.mealType.slice(1);
+        addBtn.disabled = true;
+        addBtn.innerHTML = '🔒 Hall Locked';
+        warning.style.display = 'flex';
+        warningText.textContent = `${mealLabel} locked to ${lockCheck.lockedHall}`;
+      } else if (alreadyAdded) {
+        addBtn.disabled = true;
+        addBtn.innerHTML = '✓ Already Added';
+        addBtn.classList.add('added');
+        warning.style.display = 'none';
+      } else {
+        addBtn.disabled = false;
+        addBtn.innerHTML = '<span>+</span> Add to Today\'s Menu';
+        addBtn.classList.remove('added');
+        warning.style.display = 'none';
+      }
+    }
+    
+    const rect = event.target.closest('.bubble').getBoundingClientRect();
+    let left = rect.right + 12;
+    let top = rect.top;
+    
+    if (left + 280 > window.innerWidth) left = rect.left - 292;
+    if (top + 350 > window.innerHeight) top = window.innerHeight - 360;
+    
+    card.style.left = `${left}px`;
+    card.style.top = `${top}px`;
+    card.classList.add('active');
+  }
+
+  function addCurrentDishToSelection() {
+    if (!currentViewingDish || typeof SelectionManager === 'undefined') return;
+    
+    const success = SelectionManager.addItem({
+      name: currentViewingDish.name,
+      calories: currentViewingDish.calories,
+      ingredients: currentViewingDish.ingredients,
+      hall: hallNames[currentHall],
+      mealType: currentMeal, // Pass the currently selected meal type (breakfast/lunch/dinner)
+      color: currentViewingColor ? currentViewingColor.bg.match(/#[a-f0-9]+/i)?.[0] || '#6366f1' : '#6366f1'
+    });
+    
+    if (success) {
+      const addBtn = document.getElementById('addToSelectionBtn');
+      addBtn.disabled = true;
+      addBtn.innerHTML = '✓ Added!';
+      addBtn.classList.add('added');
+    }
+  }
+
+  function hideDishCard() {
+    document.getElementById('dishCard').classList.remove('active');
+    currentViewingDish = null;
+    currentViewingColor = null;
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initHallTabs();
+    initMealTabs();
+    initWeekendLogic();
+    setTimeout(generateVisualization, 100);
+    loadLastSelection();
+  });
+
+  // Handle weekend - no breakfast on Saturdays and Sundays
+  function initWeekendLogic() {
+    const now = new Date();
+    const dayNum = now.getDay(); // 0 = Sunday, 6 = Saturday
+    const isWeekend = (dayNum === 0 || dayNum === 6);
+    
+    const breakfastTab = document.getElementById('breakfastTab');
+    const weekendNotice = document.getElementById('weekendBreakfastNotice');
+    
+    if (isWeekend) {
+      // Disable breakfast tab
+      if (breakfastTab) {
+        breakfastTab.classList.add('disabled');
+        breakfastTab.title = 'No breakfast on weekends';
+      }
+      
+      // Show weekend notice
+      if (weekendNotice) {
+        weekendNotice.style.display = 'flex';
+      }
+      
+      // If currently on breakfast, switch to lunch
+      if (currentMeal === 'breakfast') {
+        currentMeal = 'lunch';
+        document.querySelectorAll('.meal-tab').forEach(tab => {
+          tab.classList.toggle('active', tab.dataset.meal === 'lunch');
+        });
+        generateVisualization();
+      }
+    }
+    
+    // Store globally for other functions
+    window.isWeekend = isWeekend;
+  }
+
+  // Load last selection from database (excluding today - show previous day's selection)
+  async function loadLastSelection() {
+    const container = document.getElementById('lastSelectionBody');
+    if (!container) return;
+    
+    try {
+      const response = await fetch('/menus/history/');
+      const data = await response.json();
+      
+      if (data.success && data.history) {
+        // Get today's date string
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Find the most recent day with data, EXCLUDING today
+        const lastDay = data.history.find(day => day.hasData && day.date !== today);
+        
+        if (lastDay && lastDay.meals && lastDay.meals.length > 0) {
+          renderLastSelection(lastDay);
+        } else {
+          renderEmptyLastSelection();
+        }
+      } else {
+        renderEmptyLastSelection();
+      }
+    } catch (error) {
+      console.error('Error loading last selection:', error);
+      renderEmptyLastSelection();
+    }
+  }
+
+  function renderLastSelection(dayData) {
+    const container = document.getElementById('lastSelectionBody');
+    if (!container) return;
+    
+    const meals = dayData.meals || [];
+    const totalCalories = dayData.totalCalories || 0;
+    const dateDisplay = dayData.dateDisplay || dayData.date;
+    
+    // Group meals by meal type
+    const mealsByType = {
+      breakfast: { items: [], hall: '', calories: 0 },
+      lunch: { items: [], hall: '', calories: 0 },
+      dinner: { items: [], hall: '', calories: 0 }
+    };
+    
+    meals.forEach(meal => {
+      const type = meal.mealType || 'lunch';
+      if (mealsByType[type]) {
+        mealsByType[type].items.push(meal);
+        mealsByType[type].hall = meal.hall || '';
+        mealsByType[type].calories += (meal.calories || 0);
+      }
+    });
+    
+    let html = `
+      <div class="last-meal-date">
+        <span class="date-icon">📅</span>
+        <span class="date-value">${dateDisplay}</span>
+        <span class="total-cal">${totalCalories} kcal</span>
+      </div>
+      <div class="meal-sections">
+    `;
+    
+    const mealIcons = { breakfast: '🌅', lunch: '☀️', dinner: '🌙' };
+    const mealLabels = { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner' };
+    
+    ['breakfast', 'lunch', 'dinner'].forEach(type => {
+      const mealData = mealsByType[type];
+      if (mealData.items.length > 0) {
+        html += `
+          <div class="meal-section-group">
+            <div class="meal-section-header">
+              <span class="meal-type-icon">${mealIcons[type]}</span>
+              <span class="meal-type-label">${mealLabels[type]}</span>
+              <span class="meal-hall-tag">${mealData.hall}</span>
+            </div>
+            <div class="meal-section-items">
+        `;
+        mealData.items.forEach(item => {
+          html += `
+            <div class="meal-item-compact">
+              <span class="item-name">${item.name}</span>
+              <span class="item-cal">${item.calories || 0}</span>
+            </div>
+          `;
+        });
+        html += `</div></div>`;
+      }
+    });
+    
+    html += `</div>`;
+    container.innerHTML = html;
+  }
+
+  function renderEmptyLastSelection() {
+    const container = document.getElementById('lastSelectionBody');
+    if (!container) return;
+    
+    container.innerHTML = `
+      <div class="last-meal-empty">
+        <div class="last-meal-empty-icon">📭</div>
+        <p class="last-meal-empty-text">No recent selections<br>Add dishes from recommendations!</p>
+      </div>
+    `;
+  }
+  
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.dish-card') && !e.target.closest('.bubble')) hideDishCard();
+  });
+
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => { hideDishCard(); generateVisualization(); }, 300);
+  });
+
+  // ========== ONBOARDING GUIDE ==========
+  const ONBOARDING_KEY = 'smartdine_onboarding_complete';
+  
+  function checkOnboarding() {
+    // Check if user has completed onboarding
+    const completed = localStorage.getItem(ONBOARDING_KEY);
+    if (!completed) {
+      showOnboardingOverlay();
+    }
+  }
+  
+  function showOnboardingOverlay() {
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'onboardingOverlay';
+    overlay.innerHTML = `
+      <div class="onboarding-card">
+        <div class="onboarding-header">
+          <div class="onboarding-icon">W</div>
+          <h2 class="onboarding-title">Welcome to SmartDine!</h2>
+          <p class="onboarding-subtitle">Let's set up your preferences for personalized recommendations</p>
+        </div>
+        <div class="onboarding-steps">
+          <div class="onboarding-step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <div class="step-title">Go to Preferences</div>
+              <div class="step-desc">Click the Preferences link in the navigation menu</div>
+            </div>
+          </div>
+          <div class="onboarding-step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <div class="step-title">Set Food Allergies</div>
+              <div class="step-desc">Select any foods you're allergic to for safe recommendations</div>
+            </div>
+          </div>
+          <div class="onboarding-step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <div class="step-title">Set Daily Calorie Target</div>
+              <div class="step-desc">Adjust the slider to match your dietary goals</div>
+            </div>
+          </div>
+          <div class="onboarding-step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+              <div class="step-title">Set Diet Preferences</div>
+              <div class="step-desc">Choose your preferred food categories (Vegetarian, Halal, etc.)</div>
+            </div>
+          </div>
+          <div class="onboarding-step">
+            <div class="step-number">5</div>
+            <div class="step-content">
+              <div class="step-title">Save Preferences</div>
+              <div class="step-desc">Click the Save button to apply your settings</div>
+            </div>
+          </div>
+        </div>
+        <div class="onboarding-actions">
+          <button class="onboarding-btn secondary" onclick="skipOnboarding()">Skip for now</button>
+          <a href="/survey/" class="onboarding-btn primary" onclick="markOnboardingComplete()">Go to Preferences</a>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    
+    // Add styles
+    const style = document.createElement('style');
+    style.textContent = `
+      #onboardingOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(8px);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: fadeIn 0.3s ease;
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      
+      .onboarding-card {
+        background: #fff;
+        border-radius: 20px;
+        padding: 32px;
+        max-width: 480px;
+        width: 90%;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+        animation: slideUp 0.4s ease;
+      }
+      
+      @keyframes slideUp {
+        from { transform: translateY(30px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      
+      .onboarding-header {
+        text-align: center;
+        margin-bottom: 28px;
+      }
+      
+      .onboarding-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        font-weight: 700;
+        color: #fff;
+        margin: 0 auto 16px;
+      }
+      
+      .onboarding-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0 0 8px;
+      }
+      
+      .onboarding-subtitle {
+        font-size: 14px;
+        color: #64748b;
+        margin: 0;
+      }
+      
+      .onboarding-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+      
+      .onboarding-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 14px;
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s;
+      }
+      
+      .onboarding-step:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+      }
+      
+      .step-number {
+        width: 28px;
+        height: 28px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: #fff;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      
+      .step-content {
+        flex: 1;
+      }
+      
+      .step-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #0f172a;
+        margin-bottom: 2px;
+      }
+      
+      .step-desc {
+        font-size: 12px;
+        color: #64748b;
+      }
+      
+      .onboarding-actions {
+        display: flex;
+        gap: 12px;
+      }
+      
+      .onboarding-btn {
+        flex: 1;
+        padding: 14px 20px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: none;
+      }
+      
+      .onboarding-btn.secondary {
+        background: #f1f5f9;
+        color: #64748b;
+      }
+      
+      .onboarding-btn.secondary:hover {
+        background: #e2e8f0;
+        color: #475569;
+      }
+      
+      .onboarding-btn.primary {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: #fff;
+      }
+      
+      .onboarding-btn.primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  function skipOnboarding() {
+    markOnboardingComplete();
+    const overlay = document.getElementById('onboardingOverlay');
+    if (overlay) {
+      overlay.style.opacity = '0';
+      setTimeout(() => overlay.remove(), 300);
+    }
+  }
+  
+  function markOnboardingComplete() {
+    localStorage.setItem(ONBOARDING_KEY, 'true');
+  }
+  
+  // Check onboarding on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    // Delay to let page render first
+    setTimeout(checkOnboarding, 500);
+  });
+</script>
+
 {% endblock %}

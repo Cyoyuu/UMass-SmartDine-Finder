@@ -1,51 +1,604 @@
-{% extends "base.html" %}
-{% block content %}
-  <h1>Create your account</h1>
-  {% if form.non_field_errors %}
-    <ul class="errorlist">
-      {% for error in form.non_field_errors %}
-        <li>{{ error }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-  <form method="post">
-    {% csrf_token %}
-    <div class="field">
-      <label for="id_username">Username</label>
-      {{ form.username }}
-      {% if form.username.errors %}
-        {{ form.username.errors }}
-      {% endif %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - SmartDine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Left side - branding */
+    .brand-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-section::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      animation: pulse 8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+    }
+
+    .brand-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      max-width: 400px;
+    }
+
+    .brand-logo {
+      width: 80px;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 40px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .brand-title {
+      font-size: 42px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      letter-spacing: -1px;
+    }
+
+    .brand-subtitle {
+      font-size: 18px;
+      opacity: 0.9;
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+
+    .brand-features {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      text-align: left;
+    }
+
+    .brand-feature {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 15px;
+      opacity: 0.9;
+    }
+
+    .brand-feature-icon {
+      width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    /* Right side - register form */
+    .register-section {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .register-card {
+      width: 100%;
+      max-width: 420px;
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+
+    .register-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .register-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+
+    .register-header p {
+      color: #64748b;
+      font-size: 15px;
+    }
+
+    .error-alert {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      border: 1px solid #fca5a5;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .error-alert-icon {
+      width: 20px;
+      height: 20px;
+      background: #ef4444;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .error-alert-content {
+      color: #991b1b;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: 18px;
+      pointer-events: none;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 14px 16px 14px 48px;
+      font-size: 15px;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      outline: none;
+      transition: all 0.2s ease;
+      font-family: inherit;
+      background: #f8fafc;
+    }
+
+    .form-input:focus {
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-input::placeholder {
+      color: #94a3b8;
+    }
+
+    .password-wrapper {
+      position: relative;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #64748b;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .password-toggle:hover {
+      background: #f1f5f9;
+      color: #334155;
+    }
+
+    .password-match {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      margin-top: 8px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: #ecfdf5;
+      color: #059669;
+    }
+
+    .password-match.error {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+
+    .password-match::before {
+      content: '✓';
+      font-weight: 700;
+    }
+
+    .password-match.error::before {
+      content: '✗';
+    }
+
+    .password-requirements {
+      margin-top: 8px;
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .password-requirements ul {
+      margin: 6px 0 0 16px;
+      padding: 0;
+    }
+
+    .password-requirements li {
+      margin-bottom: 4px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 600;
+      color: white;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: inherit;
+      position: relative;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .submit-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px -10px rgba(102, 126, 234, 0.5);
+    }
+
+    .submit-btn:hover::before {
+      left: 100%;
+    }
+
+    .submit-btn:active {
+      transform: translateY(0);
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 24px 0;
+      gap: 16px;
+    }
+
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: #e2e8f0;
+    }
+
+    .divider-text {
+      font-size: 13px;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    .login-link {
+      text-align: center;
+      font-size: 15px;
+      color: #64748b;
+    }
+
+    .login-link a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+      margin-left: 4px;
+      transition: color 0.2s;
+    }
+
+    .login-link a:hover {
+      color: #4f46e5;
+    }
+
+    /* Floating bubbles */
+    .bubbles {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .bubble {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      animation: float 20s infinite;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 0.5;
+      }
+      50% {
+        transform: translateY(-100px) rotate(180deg);
+        opacity: 0.8;
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      body {
+        flex-direction: column;
+      }
+
+      .brand-section {
+        padding: 40px 20px;
+        min-height: auto;
+      }
+
+      .brand-title {
+        font-size: 32px;
+      }
+
+      .brand-features {
+        display: none;
+      }
+
+      .register-section {
+        padding: 20px;
+      }
+
+      .register-card {
+        padding: 32px 24px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .brand-section {
+        padding: 30px 20px;
+      }
+
+      .brand-logo {
+        width: 60px;
+        height: 60px;
+        font-size: 30px;
+      }
+
+      .brand-title {
+        font-size: 26px;
+      }
+
+      .brand-subtitle {
+        font-size: 15px;
+        margin-bottom: 20px;
+      }
+
+      .register-card {
+        padding: 28px 20px;
+        border-radius: 20px;
+      }
+
+      .register-header h1 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Brand Section -->
+  <div class="brand-section">
+    <div class="bubbles">
+      <div class="bubble" style="width: 80px; height: 80px; left: 10%; animation-delay: 0s;"></div>
+      <div class="bubble" style="width: 60px; height: 60px; left: 30%; animation-delay: 2s;"></div>
+      <div class="bubble" style="width: 100px; height: 100px; left: 70%; animation-delay: 4s;"></div>
+      <div class="bubble" style="width: 40px; height: 40px; left: 85%; animation-delay: 6s;"></div>
+      <div class="bubble" style="width: 70px; height: 70px; left: 50%; animation-delay: 8s;"></div>
     </div>
-    <div class="field">
-      <label for="id_password1">Password</label>
-      <div class="password-wrapper">
-        <input type="password" name="password1" id="id_password1" required>
-        <button type="button" class="password-toggle" onclick="togglePassword('id_password1')">Show</button>
+
+    <div class="brand-content">
+      <div class="brand-logo">🍽️</div>
+      <h1 class="brand-title">SmartDine</h1>
+      <p class="brand-subtitle">Join thousands of students making smarter dining choices every day.</p>
+      
+      <div class="brand-features">
+        <div class="brand-feature">
+          <div class="brand-feature-icon">🎯</div>
+          <span>Set your dietary preferences</span>
+        </div>
+        <div class="brand-feature">
+          <div class="brand-feature-icon">📱</div>
+          <span>Access from any device</span>
+        </div>
+        <div class="brand-feature">
+          <div class="brand-feature-icon">🌟</div>
+          <span>Rate and review dining halls</span>
+        </div>
       </div>
-      {% if form.password1.errors %}
-        {{ form.password1.errors }}
-      {% endif %}
     </div>
-    <div class="field">
-      <label for="id_password2">Confirm Password</label>
-      <div class="password-wrapper">
-        <input type="password" name="password2" id="id_password2" required>
-        <button type="button" class="password-toggle" onclick="togglePassword('id_password2')">Show</button>
+  </div>
+
+  <!-- Register Section -->
+  <div class="register-section">
+    <div class="register-card">
+      <div class="register-header">
+        <h1>Create Account</h1>
+        <p>Start your journey with SmartDine</p>
       </div>
-      <div id="password-match" style="display:none;" class="password-match"></div>
-      {% if form.password2.errors %}
-        {{ form.password2.errors }}
+
+      {% if form.non_field_errors %}
+        <div class="error-alert">
+          <div class="error-alert-icon">!</div>
+          <div class="error-alert-content">
+            {% for error in form.non_field_errors %}
+              {{ error }}
+            {% endfor %}
+          </div>
+        </div>
       {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+          <label class="form-label" for="id_username">Username</label>
+          <div class="input-wrapper">
+            <span class="input-icon">👤</span>
+            <input type="text" name="username" id="id_username" class="form-input" 
+                   placeholder="Choose a username" required autofocus
+                   value="{{ form.username.value|default:'' }}">
+          </div>
+          {% if form.username.errors %}
+            <div class="error-alert" style="margin-top: 8px; margin-bottom: 0;">
+              <div class="error-alert-icon">!</div>
+              <div class="error-alert-content">{{ form.username.errors.0 }}</div>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_password1">Password</label>
+          <div class="input-wrapper password-wrapper">
+            <span class="input-icon">🔒</span>
+            <input type="password" name="password1" id="id_password1" class="form-input" 
+                   placeholder="Create a password" required style="padding-right: 70px;">
+            <button type="button" class="password-toggle" onclick="togglePassword('id_password1')">Show</button>
+          </div>
+          {% if form.password1.errors %}
+            <div class="error-alert" style="margin-top: 8px; margin-bottom: 0;">
+              <div class="error-alert-icon">!</div>
+              <div class="error-alert-content">{{ form.password1.errors.0 }}</div>
+            </div>
+          {% endif %}
+          <div class="password-requirements">
+            <strong>Password must contain:</strong>
+            <ul>
+              <li>At least 8 characters</li>
+              <li>Not entirely numeric</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_password2">Confirm Password</label>
+          <div class="input-wrapper password-wrapper">
+            <span class="input-icon">🔐</span>
+            <input type="password" name="password2" id="id_password2" class="form-input" 
+                   placeholder="Confirm your password" required style="padding-right: 70px;">
+            <button type="button" class="password-toggle" onclick="togglePassword('id_password2')">Show</button>
+          </div>
+          <div id="password-match" style="display:none;" class="password-match"></div>
+          {% if form.password2.errors %}
+            <div class="error-alert" style="margin-top: 8px; margin-bottom: 0;">
+              <div class="error-alert-icon">!</div>
+              <div class="error-alert-content">{{ form.password2.errors.0 }}</div>
+            </div>
+          {% endif %}
+        </div>
+
+        <button type="submit" class="submit-btn">Create Account</button>
+      </form>
+
+      <div class="divider">
+        <div class="divider-line"></div>
+        <span class="divider-text">Already have an account?</span>
+        <div class="divider-line"></div>
+      </div>
+
+      <div class="login-link">
+        Sign in to your account<a href="/login/">Login here</a>
+      </div>
     </div>
-    <button class="btn" type="submit">Register</button>
-  </form>
-  <div class="links">
-    Already have an account? <a href="/login/">Login</a>
   </div>
 
   <script>
-    // toggle password visibility
+    // Toggle password visibility
     function togglePassword(fieldId) {
       const field = document.getElementById(fieldId);
       const toggleBtn = field.nextElementSibling;
@@ -59,7 +612,7 @@
       }
     }
 
-    // check if passwords match in real time
+    // Check if passwords match in real time
     document.getElementById('id_password1').addEventListener('input', checkPasswordMatch);
     document.getElementById('id_password2').addEventListener('input', checkPasswordMatch);
 
@@ -79,10 +632,21 @@
           matchDiv.textContent = 'Passwords match';
           matchDiv.classList.remove('error');
         } else {
-          matchDiv.textContent = 'Password does not match';
+          matchDiv.textContent = 'Passwords do not match';
           matchDiv.classList.add('error');
         }
       }
     }
+
+    // Add input focus animation
+    document.querySelectorAll('.form-input').forEach(input => {
+      input.addEventListener('focus', function() {
+        this.parentElement.classList.add('focused');
+      });
+      input.addEventListener('blur', function() {
+        this.parentElement.classList.remove('focused');
+      });
+    });
   </script>
-{% endblock %}
+</body>
+</html>

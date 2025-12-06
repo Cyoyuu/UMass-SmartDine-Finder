@@ -1,7 +1,6 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from menus.views import menu_view
-from .views import RegisterView, home_view, logout_then_login
+from .views import RegisterView, home_view, logout_then_login, survey_view, skip_survey
 
 
 urlpatterns = [
@@ -15,5 +14,8 @@ urlpatterns = [
     ), name='login'),
     path('register/', RegisterView.as_view(), name='register'),
     path('logout/', logout_then_login, name='logout'),
-    path('menus/', menu_view, name='menus'),
+    
+    # Survey
+    path('survey/', survey_view, name='survey'),
+    path('survey/skip/', skip_survey, name='skip_survey'),
 ]

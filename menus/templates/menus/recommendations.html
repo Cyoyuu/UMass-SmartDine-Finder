@@ -1,0 +1,2451 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<!-- Store hall data for JavaScript - using hallName as key for reliability -->
+<script>
+  const hallsData = {
+    {% for hall in dining_halls %}
+    "{{ hall.hallName }}": {
+      "id": {{ hall.id }},
+      "hallName": "{{ hall.hallName }}",
+      "userReview": {% if hall.userReview %}{"id": {{ hall.userReview.id }}, "rating": {{ hall.userReview.rating }}, "reviewText": "{{ hall.userReview.reviewText|escapejs }}"}{% else %}null{% endif %}
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  };
+</script>
+
+<style>
+  /* Override main container */
+  main {
+    max-width: 1200px !important;
+    padding: 20px !important;
+    background: transparent !important;
+    border: none !important;
+    position: static !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Preferences Banner */
+  .preferences-banner {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #f59e0b;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    animation: slideDown 0.3s ease;
+  }
+  
+  @keyframes slideDown {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  
+  .preferences-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .preferences-banner-icon {
+    width: 36px;
+    height: 36px;
+    background: #f59e0b;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  
+  .preferences-banner-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .preferences-banner-text strong {
+    font-size: 14px;
+    color: #92400e;
+  }
+  
+  .preferences-banner-text span {
+    font-size: 12px;
+    color: #a16207;
+  }
+  
+  .preferences-banner-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  
+  .preferences-banner-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: none;
+  }
+  
+  .preferences-banner-btn.primary {
+    background: #f59e0b;
+    color: #fff;
+  }
+  
+  .preferences-banner-btn.primary:hover {
+    background: #d97706;
+  }
+  
+  .preferences-banner-btn.secondary {
+    background: rgba(255,255,255,0.8);
+    color: #92400e;
+  }
+  
+  .preferences-banner-btn.secondary:hover {
+    background: #fff;
+  }
+  
+  .preferences-banner.hidden {
+    display: none;
+  }
+
+  /* Page Header */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .page-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 4px 0;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+  }
+
+  /* View Toggle */
+  .view-toggle {
+    display: flex;
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 3px;
+  }
+
+  .view-btn {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .view-btn:hover {
+    color: #0f172a;
+  }
+
+  .view-btn.active {
+    background: #fff;
+    color: #6366f1;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  /* Preferences Bar */
+  .prefs-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .pref-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .pref-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .pref-tag.allergen { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+  .pref-tag.diet { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+  .pref-tag.calorie { background: #eef2ff; color: #6366f1; border: 1px solid #c7d2fe; }
+  .pref-tag.neutral { background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; }
+  
+  .tag-icon-style {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    margin-right: 6px;
+  }
+  
+  .tag-icon-style.allergen-icon {
+    background: #dc2626;
+    color: #fff;
+  }
+  
+  .tag-icon-style.diet-icon {
+    background: #16a34a;
+    color: #fff;
+  }
+
+  .edit-link {
+    margin-left: auto;
+    font-size: 12px;
+    color: #6366f1;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .edit-link:hover { text-decoration: underline; }
+  
+  /* Filter Info Banner */
+  .filter-info-banner {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+  
+  .filter-info-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    font-size: 13px;
+  }
+  
+  .filter-icon-style { 
+    width: 28px;
+    height: 28px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+  }
+  
+  .filter-info-content strong { 
+    font-weight: 600;
+    background: rgba(255,255,255,0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  
+  .filter-info-content a {
+    color: #fff;
+    text-decoration: underline;
+    font-weight: 500;
+  }
+  
+  /* Diet badge on menu chips */
+  .menu-chip {
+    position: relative;
+  }
+  
+  .menu-chip.has-diet-tags {
+    border-color: #16a34a;
+    background: linear-gradient(135deg, #fff 0%, #f0fdf4 100%);
+  }
+  
+  .chip-diet-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 16px;
+    height: 16px;
+    background: #16a34a;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+  }
+  
+  .chip-tooltip .tooltip-diet {
+    display: block;
+    font-size: 10px;
+    color: #16a34a;
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid #e2e8f0;
+  }
+  
+  /* No items styling */
+  .no-items {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 2px dashed #e2e8f0;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .no-items-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 300;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    border: 2px dashed #cbd5e1;
+  }
+  
+  .no-items-text {
+    color: #64748b;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  
+  .no-items-link {
+    font-size: 12px;
+    color: #6366f1;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  .no-items-link:hover { text-decoration: underline; }
+
+  /* Meal Tabs */
+  .meal-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+  }
+
+  .meal-tab {
+    padding: 10px 20px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+  }
+
+  .meal-tab:hover {
+    border-color: #cbd5e1;
+    color: #0f172a;
+  }
+
+  .meal-tab.active {
+    background: #6366f1;
+    border-color: #6366f1;
+    color: #fff;
+  }
+
+  .meal-tab.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+    text-decoration: line-through;
+  }
+
+  .weekend-notice-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #fbbf24;
+    border-radius: 10px;
+    margin-bottom: 16px;
+  }
+
+  .weekend-notice-bar .notice-icon {
+    font-size: 16px;
+  }
+
+  .weekend-notice-bar .notice-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: #92400e;
+  }
+
+  /* Main Layout - both columns scroll together with page */
+  .content-grid {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+  }
+  
+  .left-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Left content area */
+  .left-content {
+    min-width: 0;
+    position: static;
+  }
+
+  /* View Panels */
+  .view-panel { display: none; }
+  .view-panel.active { display: block; }
+
+  /* Recommendation Cards */
+  .rec-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .rec-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    transition: box-shadow 0.15s ease;
+  }
+
+  .rec-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  .rec-card.rank-1 {
+    border-color: #fbbf24;
+    border-width: 2px;
+  }
+
+  .rec-card.rank-2 {
+    border-color: #94a3b8;
+  }
+
+  .rec-card.rank-other {
+    border-color: #e2e8f0;
+  }
+
+  /* Card Image */
+  .card-image {
+    width: 100%;
+    height: 140px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Dining hall specific gradient backgrounds */
+  .card-image {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  /* Worcester - Purple/Blue */
+  .rec-card[data-hall-name="Worcester"] .card-image {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  /* Hampshire - Green/Teal */
+  .rec-card[data-hall-name="Hampshire"] .card-image {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  }
+
+  /* Berkshire - Orange/Red */
+  .rec-card[data-hall-name="Berkshire"] .card-image {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  }
+
+  /* Franklin - Blue/Cyan */
+  .rec-card[data-hall-name="Franklin"] .card-image {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  }
+
+  /* Rank-based border styling */
+  .rank-1 .card-image {
+    border-bottom: 3px solid #fbbf24;
+  }
+
+  .rank-2 .card-image {
+    border-bottom: 3px solid #94a3b8;
+  }
+
+  .image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.6) 100%);
+  }
+
+  .rank-badge-overlay {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .rank-badge-overlay.gold {
+    background: rgba(251, 191, 36, 0.95);
+    color: #78350f;
+  }
+
+  .rank-badge-overlay.silver {
+    background: rgba(241, 245, 249, 0.95);
+    color: #475569;
+  }
+
+  .rank-badge-overlay.other {
+    background: rgba(226, 232, 240, 0.95);
+    color: #64748b;
+  }
+
+  .image-hall-name {
+    position: absolute;
+    bottom: 12px;
+    left: 16px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+
+  /* Card Content */
+  .card-content {
+    padding: 16px;
+  }
+
+  .card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .meta-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  .status-badge.open .status-dot { background: #22c55e; }
+  .status-badge.open { color: #16a34a; }
+  .status-badge.closed .status-dot { background: #ef4444; }
+  .status-badge.closed { color: #dc2626; }
+
+  .hours-text {
+    font-size: 12px;
+    color: #94a3b8;
+  }
+
+  .meta-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* Rating Display */
+  .rating-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .rating-display {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 6px;
+  }
+
+  .rating-value {
+    font-size: 13px;
+    font-weight: 700;
+    color: #92400e;
+  }
+
+  .rating-star {
+    color: #f59e0b;
+    font-size: 12px;
+  }
+
+  .rating-count {
+    font-size: 11px;
+    color: #a16207;
+  }
+
+  .review-btn {
+    padding: 4px 10px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #6366f1;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .review-btn:hover {
+    background: #eef2ff;
+    border-color: #6366f1;
+  }
+
+  /* Match Score */
+  .match-display {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .match-score {
+    font-size: 18px;
+    font-weight: 700;
+    color: #22c55e;
+    line-height: 1;
+  }
+
+  .match-label {
+    font-size: 10px;
+    color: #94a3b8;
+  }
+
+  /* Menu Section */
+  .menu-section {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .menu-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .items-count {
+    font-size: 11px;
+    color: #94a3b8;
+  }
+
+  .menu-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .menu-chip {
+    position: relative;
+    padding: 6px 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .menu-chip:hover {
+    background: #eef2ff;
+    border-color: #a5b4fc;
+  }
+
+  .menu-chip.selected {
+    background: #6366f1;
+    border-color: #6366f1;
+    color: #fff;
+  }
+
+  .menu-chip.selected::after {
+    content: ' ✓';
+    font-size: 10px;
+  }
+
+  .chip-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 12px;
+    background: #0f172a;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.15s ease;
+    z-index: 50;
+  }
+
+  .chip-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #0f172a;
+  }
+
+  .menu-chip:hover .chip-tooltip {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .tooltip-cal {
+    color: #fbbf24;
+    font-weight: 600;
+  }
+
+  .no-items {
+    color: #94a3b8;
+    font-size: 13px;
+    font-style: italic;
+    padding: 12px 0;
+  }
+
+  /* Card Actions */
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+  }
+
+  .action-btn.primary {
+    background: #6366f1;
+    color: #fff;
+    border: none;
+  }
+
+  .action-btn.primary:hover {
+    background: #4f46e5;
+  }
+
+  .action-btn.secondary {
+    background: #fff;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+  }
+
+  .action-btn.secondary:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #374151;
+  }
+
+  /* ============================================
+     TRACKER PANEL - Right side panel styles
+     Using unique prefix to avoid conflicts
+     ============================================ */
+  
+  /* Sidebar - scrolls with page content */
+  .rec-sidebar {
+    width: 320px;
+    flex-shrink: 0;
+  }
+  
+  .tracker-panel {
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    overflow: hidden;
+  }
+
+  /* Tracker Header */
+  .tracker-header {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    padding: 16px 20px;
+    color: #fff;
+  }
+
+  .tracker-header-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .tracker-header-title .header-icon {
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  
+  .empty-icon-style {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 300;
+    color: #94a3b8;
+    border: 2px dashed #cbd5e1;
+  }
+  
+  .warning-icon {
+    width: 18px;
+    height: 18px;
+    background: #f59e0b;
+    color: #fff;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    margin-right: 6px;
+  }
+
+  .tracker-header-sub {
+    font-size: 11px;
+    opacity: 0.85;
+    margin-top: 4px;
+  }
+
+  /* Tracker Body */
+  .tracker-body {
+    padding: 20px;
+  }
+
+  /* Calorie Circle */
+  .tracker-circle-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .tracker-circle {
+    position: relative;
+    width: 140px;
+    height: 140px;
+  }
+
+  .tracker-circle svg {
+    transform: rotate(-90deg);
+    width: 100%;
+    height: 100%;
+  }
+
+  .tracker-circle circle {
+    fill: none;
+    stroke-width: 10;
+    stroke-linecap: round;
+  }
+
+  .tracker-circle .circle-bg {
+    stroke: #e2e8f0;
+  }
+
+  .tracker-circle .circle-progress {
+    stroke: url(#calorieGradient);
+    stroke-dasharray: 408;
+    stroke-dashoffset: 408;
+    transition: stroke-dashoffset 0.6s ease;
+  }
+
+  .tracker-circle-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+
+  .tracker-cal-current {
+    display: block;
+    font-size: 28px;
+    font-weight: 800;
+    color: #6366f1;
+    line-height: 1;
+  }
+
+  .tracker-cal-target {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 4px;
+  }
+
+  /* Meal Stats */
+  .tracker-meals {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .tracker-meal-item {
+    text-align: center;
+    padding: 12px 8px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .tracker-meal-icon {
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+
+  .tracker-meal-name {
+    font-size: 10px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .tracker-meal-cal {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  /* Selection Section */
+  .tracker-selection {
+    border-top: 1px solid #e2e8f0;
+    padding-top: 20px;
+  }
+
+  .tracker-selection-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tracker-selection-list {
+    min-height: 60px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .tracker-empty {
+    text-align: center;
+    padding: 24px 16px;
+    color: #94a3b8;
+  }
+
+  .tracker-empty-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+    opacity: 0.5;
+  }
+
+  .tracker-empty-text {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .tracker-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    transition: all 0.15s ease;
+  }
+
+  .tracker-item:hover {
+    border-color: #c7d2fe;
+    background: #fafaff;
+  }
+
+  .tracker-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .tracker-item-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .tracker-item-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .tracker-item-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tracker-item-cal {
+    font-size: 11px;
+    color: #64748b;
+  }
+
+  .tracker-item-remove {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 6px;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.15s ease;
+  }
+
+  .tracker-item-remove:hover {
+    background: #fee2e2;
+    color: #ef4444;
+  }
+
+  /* Tracker Footer */
+  .tracker-footer {
+    background: #f8fafc;
+    padding: 16px 20px;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .tracker-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .tracker-total-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #64748b;
+  }
+
+  .tracker-total-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #6366f1;
+  }
+
+  .tracker-warning {
+    padding: 10px 12px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 8px;
+    font-size: 11px;
+    color: #92400e;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tracker-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .tracker-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+  }
+
+  .tracker-btn-primary {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    border: none;
+  }
+
+  .tracker-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  }
+
+  .tracker-btn-secondary {
+    background: #fff;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+  }
+
+  .tracker-btn-secondary:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+  }
+
+  /* Legacy classes for error/empty states */
+  .sidebar-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 24px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 20px;
+    color: #64748b;
+  }
+
+  .empty-state p {
+    margin: 0 0 12px 0;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background: #6366f1;
+    color: #fff;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+  }
+
+  .btn:hover { background: #4f46e5; }
+
+  .btn-ghost {
+    background: transparent;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+  }
+
+  .btn-ghost:hover {
+    background: #f8fafc;
+    color: #374151;
+  }
+
+  /* AI Assistant View */
+  .ai-panel {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    height: calc(100vh - 280px);
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ai-header {
+    padding: 16px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .ai-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0 0 4px 0;
+  }
+
+  .ai-subtitle {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0;
+  }
+
+  .ai-chat {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .chat-message {
+    max-width: 80%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .chat-message.assistant {
+    background: #f1f5f9;
+    color: #374151;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+
+  .chat-message.user {
+    background: #6366f1;
+    color: #fff;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+
+  .ai-input-area {
+    padding: 12px 16px;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .ai-input-wrapper {
+    display: flex;
+    gap: 8px;
+  }
+
+  .ai-input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    resize: none;
+    font-family: inherit;
+  }
+
+  .ai-input:focus {
+    outline: none;
+    border-color: #6366f1;
+  }
+
+  .ai-send-btn {
+    padding: 10px 16px;
+    background: #6366f1;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .ai-send-btn:hover { background: #4f46e5; }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .content-grid { 
+      flex-direction: column; 
+    }
+    .rec-sidebar { 
+      width: 100%;
+      margin-top: 20px;
+    }
+    .tracker-panel { 
+      max-width: 100%; 
+    }
+  }
+
+  @media (max-width: 640px) {
+    .preferences-banner { flex-direction: column; align-items: stretch; text-align: center; }
+    .preferences-banner-content { flex-direction: column; }
+    .preferences-banner-actions { justify-content: center; }
+    .page-header { flex-direction: column; gap: 12px; }
+    .prefs-bar { flex-direction: column; align-items: flex-start; }
+    .edit-link { margin-left: 0; }
+    .meal-tabs { overflow-x: auto; padding-bottom: 4px; }
+    .card-meta { flex-direction: column; gap: 8px; align-items: flex-start; }
+    .meta-right { width: 100%; justify-content: space-between; }
+    .card-actions { flex-direction: column; }
+  }
+</style>
+
+<!-- Preferences Banner (show if not set) -->
+{% if show_preferences_banner %}
+<div class="preferences-banner" id="preferencesBanner">
+  <div class="preferences-banner-content">
+    <div class="preferences-banner-icon">!</div>
+    <div class="preferences-banner-text">
+      <strong>Set your preferences for better recommendations</strong>
+      <span>Tell us about your dietary preferences and allergies</span>
+    </div>
+  </div>
+  <div class="preferences-banner-actions">
+    <a href="{% url 'survey' %}" class="preferences-banner-btn primary">Set Preferences</a>
+    <button class="preferences-banner-btn secondary" onclick="dismissPreferencesBanner()">Maybe Later</button>
+  </div>
+</div>
+{% endif %}
+
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Today's Recommendations</h1>
+    <p class="page-subtitle">Personalized dining suggestions based on your preferences</p>
+  </div>
+  <div class="view-toggle">
+    <button class="view-btn active" data-view="recommendations" onclick="switchView('recommendations')">
+      Recommendations
+    </button>
+    <button class="view-btn" data-view="assistant" onclick="switchView('assistant')">
+      AI Assistant
+    </button>
+  </div>
+</div>
+
+<!-- Preferences Bar - Shows active filters -->
+<div class="prefs-bar">
+  <span class="pref-label">Active Filters:</span>
+  {% if user_allergens %}
+    <span class="pref-tag allergen" title="Items with these allergens are hidden">
+      <span class="tag-icon-style allergen-icon">X</span> Avoiding: {{ user_allergens|join:", " }}
+    </span>
+  {% else %}
+    <span class="pref-tag neutral">No allergen filters</span>
+  {% endif %}
+  {% if user_diet_prefs %}
+    <span class="pref-tag diet" title="Only showing items matching these preferences">
+      <span class="tag-icon-style diet-icon">V</span> Showing: {{ user_diet_prefs|join:", " }}
+    </span>
+  {% else %}
+    <span class="pref-tag neutral">All diet types</span>
+  {% endif %}
+  <span class="pref-tag calorie">{{ calorie_target }} kcal/day</span>
+  <a href="{% url 'survey' %}" class="edit-link">Edit Preferences</a>
+</div>
+
+
+
+
+<!-- Meal Tabs -->
+<div class="meal-tabs" id="mealTabs">
+  <a href="?meal=breakfast" class="meal-tab {% if current_meal == 'breakfast' %}active{% endif %}" id="breakfastTabLink">Breakfast</a>
+  <a href="?meal=lunch" class="meal-tab {% if current_meal == 'lunch' %}active{% endif %}">Lunch</a>
+  <a href="?meal=dinner" class="meal-tab {% if current_meal == 'dinner' %}active{% endif %}">Dinner</a>
+</div>
+<!-- Weekend No Breakfast Notice -->
+<div class="weekend-notice-bar" id="weekendNoticeBar" style="display: none;">
+  <span class="notice-icon">🌙</span>
+  <span class="notice-text">It's the weekend! Dining halls don't serve breakfast on Saturdays and Sundays.</span>
+</div>
+
+<!-- Main Content -->
+<div class="content-grid">
+  <!-- Left: Recommendations or AI -->
+  <div class="left-content">
+    <!-- Recommendations View -->
+    <div class="view-panel active" id="recommendationsView">
+      {% if error %}
+        <div class="sidebar-card">
+          <p style="color: #ef4444;">{{ error }}</p>
+        </div>
+      {% elif dining_halls %}
+        <div class="rec-cards">
+          {% for hall in dining_halls %}
+          <div class="rec-card {% if forloop.counter == 1 %}rank-1{% elif forloop.counter == 2 %}rank-2{% else %}rank-other{% endif %}" data-hall-id="{{ hall.id }}" data-hall-name="{{ hall.hallName }}">
+            <!-- Card Image -->
+            <div class="card-image">
+              {% if hall.hallName == "Worcester" %}
+                <img src="{% static 'worcaster.png' %}" alt="{{ hall.hallName }}">
+              {% elif hall.hallName == "Hampshire" %}
+                <img src="{% static 'hampshire.png' %}" alt="{{ hall.hallName }}">
+              {% elif hall.hallName == "Berkshire" %}
+                <img src="{% static 'berkshire.png' %}" alt="{{ hall.hallName }}">
+              {% elif hall.hallName == "Franklin" %}
+                <img src="{% static 'franklin.png' %}" alt="{{ hall.hallName }}">
+              {% endif %}
+              <div class="image-overlay"></div>
+              {% if forloop.counter == 1 %}
+                <span class="rank-badge-overlay gold">#1 Best Match</span>
+              {% elif forloop.counter == 2 %}
+                <span class="rank-badge-overlay silver">#2 Alternative</span>
+              {% else %}
+                <span class="rank-badge-overlay other">#{{ forloop.counter }}</span>
+              {% endif %}
+              <span class="image-hall-name">{{ hall.hallName }}</span>
+            </div>
+
+            <!-- Card Content -->
+            <div class="card-content">
+              <div class="card-meta">
+                <div class="meta-left">
+                  <span class="status-badge {% if hall.isOpen %}open{% else %}closed{% endif %}">
+                    <span class="status-dot"></span>
+                    {% if hall.isOpen %}Open{% else %}Closed{% endif %}
+                  </span>
+                  <span class="hours-text">{{ hall.hours }}</span>
+                </div>
+                <div class="meta-right">
+                  <div class="rating-group">
+                    <div class="rating-display">
+                      <span class="rating-value">{% if hall.avgRating %}{{ hall.avgRating }}{% else %}--{% endif %}</span>
+                      <span class="rating-star">★</span>
+                      <span class="rating-count">({{ hall.reviewCount }})</span>
+                    </div>
+                    <button class="review-btn" data-hall-id="{{ hall.id }}" data-hall-name="{{ hall.hallName }}">
+                      Write Review
+                    </button>
+                  </div>
+                  <div class="match-display">
+                    <span class="match-score">{{ hall.matchRate }}%</span>
+                    <span class="match-label">Match</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Menu Items - Filtered by user preferences -->
+              <div class="menu-section">
+                <div class="menu-header">
+                  <span class="menu-label">{{ current_meal|capfirst }} Menu</span>
+                  <span class="items-count">
+                    {% if current_meal == 'breakfast' %}
+                      {{ hall.filteredCount.breakfast }} items for you
+                    {% elif current_meal == 'lunch' %}
+                      {{ hall.filteredCount.lunch }} items for you
+                    {% else %}
+                      {{ hall.filteredCount.dinner }} items for you
+                    {% endif %}
+                  </span>
+                </div>
+                <div class="menu-chips">
+                  {% with meals=hall.filteredMeals %}
+                    {% if current_meal == 'breakfast' %}
+                      {% for item in meals.breakfast %}
+                        <div class="menu-chip {% if item.dietCategories %}has-diet-tags{% endif %}"
+                             data-name="{% if item.name %}{{ item.name }}{% else %}{{ item }}{% endif %}"
+                             data-calories="{% if item.calories %}{{ item.calories }}{% else %}300{% endif %}"
+                             data-hall="{{ hall.hallName }}">
+                          <span class="chip-name">{% if item.name %}{{ item.name }}{% else %}{{ item }}{% endif %}</span>
+                          {% if item.dietCategories %}
+                            <span class="chip-diet-badge" title="{{ item.dietCategories|join:', ' }}">✓</span>
+                          {% endif %}
+                          <div class="chip-tooltip">
+                            <span class="tooltip-cal">{% if item.calories %}{{ item.calories }}{% else %}300{% endif %} kcal</span>
+                            {% if item.dietCategories %}
+                              <span class="tooltip-diet">{{ item.dietCategories|join:", " }}</span>
+                            {% endif %}
+                          </div>
+                        </div>
+                      {% empty %}
+                        <div class="no-items">
+                          <span class="no-items-icon">?</span>
+                          <span class="no-items-text">No items matching your preferences</span>
+                          <a href="{% url 'survey' %}" class="no-items-link">Adjust preferences</a>
+                        </div>
+                      {% endfor %}
+                    {% elif current_meal == 'lunch' %}
+                      {% for item in meals.lunch %}
+                        <div class="menu-chip {% if item.dietCategories %}has-diet-tags{% endif %}"
+                             data-name="{% if item.name %}{{ item.name }}{% else %}{{ item }}{% endif %}"
+                             data-calories="{% if item.calories %}{{ item.calories }}{% else %}300{% endif %}"
+                             data-hall="{{ hall.hallName }}">
+                          <span class="chip-name">{% if item.name %}{{ item.name }}{% else %}{{ item }}{% endif %}</span>
+                          {% if item.dietCategories %}
+                            <span class="chip-diet-badge" title="{{ item.dietCategories|join:', ' }}">✓</span>
+                          {% endif %}
+                          <div class="chip-tooltip">
+                            <span class="tooltip-cal">{% if item.calories %}{{ item.calories }}{% else %}300{% endif %} kcal</span>
+                            {% if item.dietCategories %}
+                              <span class="tooltip-diet">{{ item.dietCategories|join:", " }}</span>
+                            {% endif %}
+                          </div>
+                        </div>
+                      {% empty %}
+                        <div class="no-items">
+                          <span class="no-items-icon">?</span>
+                          <span class="no-items-text">No items matching your preferences</span>
+                          <a href="{% url 'survey' %}" class="no-items-link">Adjust preferences</a>
+                        </div>
+                      {% endfor %}
+                    {% else %}
+                      {% for item in meals.dinner %}
+                        <div class="menu-chip {% if item.dietCategories %}has-diet-tags{% endif %}"
+                             data-name="{% if item.name %}{{ item.name }}{% else %}{{ item }}{% endif %}"
+                             data-calories="{% if item.calories %}{{ item.calories }}{% else %}300{% endif %}"
+                             data-hall="{{ hall.hallName }}">
+                          <span class="chip-name">{% if item.name %}{{ item.name }}{% else %}{{ item }}{% endif %}</span>
+                          {% if item.dietCategories %}
+                            <span class="chip-diet-badge" title="{{ item.dietCategories|join:', ' }}">✓</span>
+                          {% endif %}
+                          <div class="chip-tooltip">
+                            <span class="tooltip-cal">{% if item.calories %}{{ item.calories }}{% else %}300{% endif %} kcal</span>
+                            {% if item.dietCategories %}
+                              <span class="tooltip-diet">{{ item.dietCategories|join:", " }}</span>
+                            {% endif %}
+                          </div>
+                        </div>
+                      {% empty %}
+                        <div class="no-items">
+                          <span class="no-items-icon">?</span>
+                          <span class="no-items-text">No items matching your preferences</span>
+                          <a href="{% url 'survey' %}" class="no-items-link">Adjust preferences</a>
+                        </div>
+                      {% endfor %}
+                    {% endif %}
+                  {% endwith %}
+                </div>
+              </div>
+
+              <!-- Actions - View Full Menu for non-top2 cards -->
+              {% if forloop.counter > 2 %}
+              <div class="card-actions">
+                <a href="{% url 'menu' %}" class="action-btn secondary">
+                  View Full Menu
+                </a>
+              </div>
+              {% endif %}
+
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="sidebar-card">
+          <div class="empty-state">
+            <p>No recommendations available</p>
+            <a href="{% url 'survey' %}" class="btn btn-sm">Set Preferences</a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- AI Assistant View -->
+    <div class="view-panel" id="assistantView">
+      <div class="ai-panel">
+        <div class="ai-header">
+          <h3 class="ai-title">AI Dining Assistant</h3>
+          <p class="ai-subtitle">Ask me anything about dining options, nutrition, or meal planning</p>
+        </div>
+        <div class="ai-chat" id="chatMessages">
+          <div class="chat-message assistant">
+            Hello! I'm your SmartDine assistant. I can help you find meals that match your dietary needs, suggest healthy options, or answer questions about the dining halls. What would you like to know?
+          </div>
+        </div>
+        <div class="ai-input-area">
+          <div class="ai-input-wrapper">
+            <textarea class="ai-input" id="aiInput" placeholder="Ask about meals, nutrition, or recommendations..." rows="1"></textarea>
+            <button class="ai-send-btn" onclick="sendMessage()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Panel - Calorie Tracker & Selection -->
+  <div class="rec-sidebar">
+    <div class="tracker-panel">
+      <!-- Header -->
+      <div class="tracker-header">
+        <h3 class="tracker-header-title">
+           Health Dashboard
+        </h3>
+        <div class="tracker-header-sub">Track your daily nutrition</div>
+      </div>
+
+      <!-- Body -->
+      <div class="tracker-body">
+        <!-- Calorie Circle -->
+        <div class="tracker-circle-wrap">
+          <div class="tracker-circle">
+            <svg viewBox="0 0 140 140">
+              <defs>
+                <linearGradient id="calorieGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" style="stop-color:#6366f1"/>
+                  <stop offset="100%" style="stop-color:#8b5cf6"/>
+                </linearGradient>
+              </defs>
+              <circle class="circle-bg" cx="70" cy="70" r="65" />
+              <circle class="circle-progress" cx="70" cy="70" r="65" id="progressRing" />
+            </svg>
+            <div class="tracker-circle-text">
+              <span class="tracker-cal-current" id="currentCal">0</span>
+              <div class="tracker-cal-target">/ {{ calorie_target }} kcal</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Meal Stats -->
+        <div class="tracker-meals">
+          <div class="tracker-meal-item">
+            <div class="tracker-meal-name">Breakfast</div>
+            <div class="tracker-meal-cal" id="breakfastCal">0</div>
+          </div>
+          <div class="tracker-meal-item">
+            <div class="tracker-meal-name">Lunch</div>
+            <div class="tracker-meal-cal" id="lunchCal">0</div>
+          </div>
+          <div class="tracker-meal-item">
+
+            <div class="tracker-meal-name">Dinner</div>
+            <div class="tracker-meal-cal" id="dinnerCal">0</div>
+          </div>
+        </div>
+
+        <!-- Selection Section -->
+        <div class="tracker-selection">
+          <h4 class="tracker-selection-title">
+            <span>🍽️</span> Today's Selection
+          </h4>
+          <div class="tracker-selection-list" id="selectedList">
+            <div class="tracker-empty">
+              <div class="tracker-empty-icon empty-icon-style">+</div>
+              <div class="tracker-empty-text">No items selected yet.<br>Click on dishes to add them!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="tracker-footer">
+        <div class="tracker-total">
+          <span class="tracker-total-label">Total Calories</span>
+          <span class="tracker-total-value" id="mealTotal">0 kcal</span>
+        </div>
+        <div class="tracker-warning" id="calorieWarning" style="display: none;">
+          <span class="warning-icon">!</span> Exceeds your daily calorie target
+        </div>
+        <div class="tracker-actions">
+          <button class="tracker-btn tracker-btn-secondary" onclick="clearSelection()">Clear All</button>
+          <button class="tracker-btn tracker-btn-primary" onclick="confirmMeal()">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Write Review Modal -->
+<div class="review-modal-overlay" id="reviewModalOverlay" onclick="closeReviewModal()"></div>
+<div class="review-modal" id="reviewModal">
+  <div class="modal-header">
+    <h3 class="modal-title" id="reviewModalTitle">Write a Review</h3>
+    <button class="modal-close" onclick="closeReviewModal()">×</button>
+  </div>
+  <form class="modal-body" id="reviewForm" onsubmit="submitReviewFromModal(event)">
+    {% csrf_token %}
+    <input type="hidden" id="reviewHallId" name="hallId" value="">
+    
+    <!-- Existing Review Notice -->
+    <div class="existing-review-notice" id="existingReviewNotice" style="display: none;">
+      <span class="notice-icon">📝</span>
+      <span class="notice-text">You've already reviewed this hall. Your changes will update your previous review.</span>
+    </div>
+    
+    <div class="form-group">
+      <label>Your Rating</label>
+      <div class="star-rating-input" id="starRatingInput">
+        <span class="star-btn" data-rating="1">★</span>
+        <span class="star-btn" data-rating="2">★</span>
+        <span class="star-btn" data-rating="3">★</span>
+        <span class="star-btn" data-rating="4">★</span>
+        <span class="star-btn" data-rating="5">★</span>
+      </div>
+      <input type="hidden" id="ratingValue" name="rating" value="5">
+    </div>
+    
+    <div class="form-group">
+      <label for="reviewTextInput">Your Review</label>
+      <textarea id="reviewTextInput" name="reviewText" placeholder="Share your dining experience..." rows="4" required></textarea>
+    </div>
+    
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" onclick="closeReviewModal()">Cancel</button>
+      <button type="submit" class="btn" id="submitReviewBtn">Submit Review</button>
+    </div>
+  </form>
+</div>
+
+<style>
+  /* Review Modal */
+  .review-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 500;
+  }
+
+  .review-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .review-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    width: 90%;
+    max-width: 440px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 510;
+  }
+
+  .review-modal.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .modal-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0;
+  }
+
+  .modal-close {
+    width: 32px;
+    height: 32px;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 6px;
+    font-size: 18px;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .modal-close:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  /* Existing Review Notice */
+  .existing-review-notice {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 8px;
+    margin-bottom: 16px;
+  }
+
+  .existing-review-notice .notice-icon {
+    font-size: 16px;
+  }
+
+  .existing-review-notice .notice-text {
+    font-size: 12px;
+    color: #6366f1;
+    line-height: 1.4;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-group:last-of-type {
+    margin-bottom: 0;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+  }
+
+  .star-rating-input {
+    display: flex;
+    gap: 4px;
+  }
+
+  .star-btn {
+    font-size: 28px;
+    color: #e2e8f0;
+    cursor: pointer;
+    transition: color 0.15s ease;
+  }
+
+  .star-btn:hover,
+  .star-btn.active {
+    color: #fbbf24;
+  }
+
+  .form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  .form-group textarea:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .modal-actions .btn {
+    flex: 1;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 12px 20px;
+    background: #22c55e;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 10px 30px rgba(34, 197, 94, 0.3);
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 600;
+  }
+
+  .toast.error {
+    background: #ef4444;
+    box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+  }
+
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+</style>
+
+<script>
+  // State
+  let currentMeal = '{{ current_meal }}';
+  let currentRating = 5;
+  let currentUserReview = null;
+  const calorieTarget = {{ calorie_target }};
+  const mealLimits = {
+    breakfast: { min: 300, max: 500 },
+    lunch: { min: 400, max: 600 },
+    dinner: { min: 500, max: 700 }
+  };
+
+  // Preferences Banner
+  function dismissPreferencesBanner() {
+    const banner = document.getElementById('preferencesBanner');
+    if (banner) {
+      banner.style.opacity = '0';
+      banner.style.transform = 'translateY(-10px)';
+      setTimeout(() => {
+        banner.style.display = 'none';
+      }, 300);
+      // Remember dismissal for this session
+      sessionStorage.setItem('preferencesBannerDismissed', 'true');
+    }
+  }
+  
+  // Check if banner was dismissed this session
+  if (sessionStorage.getItem('preferencesBannerDismissed')) {
+    const banner = document.getElementById('preferencesBanner');
+    if (banner) banner.style.display = 'none';
+  }
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', function() {
+    // Ensure sidebar scrolls with page (force remove any sticky/fixed positioning)
+    const sidebar = document.querySelector('.rec-sidebar');
+    const trackerPanel = document.querySelector('.tracker-panel');
+    if (sidebar) {
+      sidebar.style.position = 'static';
+      sidebar.style.top = 'auto';
+      sidebar.style.bottom = 'auto';
+    }
+    if (trackerPanel) {
+      trackerPanel.style.position = 'static';
+      trackerPanel.style.top = 'auto';
+      trackerPanel.style.bottom = 'auto';
+    }
+    
+    initChipHandlers();
+    initStarRating();
+    initReviewButtons();
+    initWeekendLogic();
+    updateDisplay();
+    syncWithGlobalSelection();
+
+    // AI input handlers
+    const input = document.getElementById('aiInput');
+    if (input) {
+      input.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+      });
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+    }
+
+    // Listen for selection changes from global sidebar
+    window.addEventListener('selectionChanged', function() {
+      syncWithGlobalSelection();
+      updateDisplay();
+    });
+    
+    // Listen for hall lock changes
+    window.addEventListener('hallLockChanged', function() {
+      syncWithGlobalSelection();
+      updateDisplay();
+    });
+    
+    // Listen for localStorage changes from other tabs
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'todaySelection' || e.key === 'lockedHalls') {
+        syncWithGlobalSelection();
+        updateDisplay();
+      }
+    });
+  });
+
+
+  // Handle weekend - no breakfast on Saturdays and Sundays
+  function initWeekendLogic() {
+    const now = new Date();
+    const dayNum = now.getDay(); // 0 = Sunday, 6 = Saturday
+    const isWeekend = (dayNum === 0 || dayNum === 6);
+    
+    const breakfastLink = document.getElementById('breakfastTabLink');
+    const weekendNotice = document.getElementById('weekendNoticeBar');
+    
+    if (isWeekend) {
+      // Disable breakfast tab
+      if (breakfastLink) {
+        breakfastLink.classList.add('disabled');
+        breakfastLink.removeAttribute('href');
+        breakfastLink.title = 'No breakfast on weekends';
+      }
+      
+      // Show weekend notice
+      if (weekendNotice) {
+        weekendNotice.style.display = 'flex';
+      }
+      
+      // If user somehow got to breakfast page on weekend, redirect to lunch
+      if (currentMeal === 'breakfast') {
+        window.location.href = '?meal=lunch';
+      }
+    }
+    
+    window.isWeekend = isWeekend;
+  }
+
+  // Sync with global SelectionManager - only sync current meal type
+  function syncWithGlobalSelection() {
+    if (typeof SelectionManager !== 'undefined') {
+      const selections = SelectionManager.getSelections();
+      // Mark chips that are already selected FOR THE CURRENT MEAL TYPE ONLY
+      document.querySelectorAll('.menu-chip').forEach(chip => {
+        const name = chip.dataset.name;
+        // Only show selected if this item was added for the current meal type
+        const isSelected = selections.some(s => s.name === name && s.mealType === currentMeal);
+        chip.classList.toggle('selected', isSelected);
+      });
+    }
+  }
+
+  // Get selected items from global manager
+  function getSelectedItems() {
+    if (typeof SelectionManager !== 'undefined') {
+      return SelectionManager.getSelections();
+    }
+    return [];
+  }
+
+  // Initialize Review Buttons
+  function initReviewButtons() {
+    document.querySelectorAll('.review-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const hallId = this.dataset.hallId;
+        const hallName = this.dataset.hallName;
+        const hallData = hallsData[hallName];  // Use hallName as key
+        if (hallData) {
+          openWriteReviewModal(hallId, hallName, hallData.userReview);
+        } else {
+          // Fallback if hallsData doesn't have this hall
+          openWriteReviewModal(hallId, hallName, null);
+        }
+      });
+    });
+  }
+
+  // Star Rating
+  function initStarRating() {
+    const stars = document.querySelectorAll('.star-btn');
+    stars.forEach(star => {
+      star.addEventListener('click', function() {
+        const rating = parseInt(this.dataset.rating);
+        currentRating = rating;
+        document.getElementById('ratingValue').value = rating;
+        updateStarDisplay(rating);
+      });
+      star.addEventListener('mouseenter', function() {
+        const rating = parseInt(this.dataset.rating);
+        updateStarDisplay(rating);
+      });
+    });
+    
+    const starInput = document.getElementById('starRatingInput');
+    if (starInput) {
+      starInput.addEventListener('mouseleave', function() {
+        updateStarDisplay(currentRating);
+      });
+    }
+    
+    updateStarDisplay(5);
+  }
+
+  function updateStarDisplay(rating) {
+    const stars = document.querySelectorAll('.star-btn');
+    stars.forEach(star => {
+      const starRating = parseInt(star.dataset.rating);
+      star.classList.toggle('active', starRating <= rating);
+    });
+  }
+
+  // Write Review Modal
+  function openWriteReviewModal(hallId, hallName, userReview) {
+    currentUserReview = userReview;
+    
+    document.getElementById('reviewHallId').value = hallId;
+    document.getElementById('reviewModalTitle').textContent = `Review ${hallName}`;
+    
+    const notice = document.getElementById('existingReviewNotice');
+    const submitBtn = document.getElementById('submitReviewBtn');
+    
+    if (userReview) {
+      // User has existing review - populate form with their previous data
+      document.getElementById('reviewTextInput').value = userReview.reviewText || '';
+      currentRating = userReview.rating || 5;
+      document.getElementById('ratingValue').value = currentRating;
+      updateStarDisplay(currentRating);
+      notice.style.display = 'flex';
+      submitBtn.textContent = 'Update Review';
+    } else {
+      // New review
+      document.getElementById('reviewTextInput').value = '';
+      currentRating = 5;
+      document.getElementById('ratingValue').value = 5;
+      updateStarDisplay(5);
+      notice.style.display = 'none';
+      submitBtn.textContent = 'Submit Review';
+    }
+    
+    document.getElementById('reviewModalOverlay').classList.add('active');
+    document.getElementById('reviewModal').classList.add('active');
+  }
+
+  function closeReviewModal() {
+    document.getElementById('reviewModalOverlay').classList.remove('active');
+    document.getElementById('reviewModal').classList.remove('active');
+    document.getElementById('reviewForm').reset();
+    currentRating = 5;
+    updateStarDisplay(5);
+    currentUserReview = null;
+  }
+
+  function submitReviewFromModal(event) {
+    event.preventDefault();
+    const hallId = document.getElementById('reviewHallId').value;
+    const formData = new FormData(event.target);
+    
+    fetch(`/menus/review/${hallId}/`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showToast(data.created ? 'Review submitted!' : 'Review updated!');
+        closeReviewModal();
+        // Refresh page to show updated rating
+        setTimeout(() => location.reload(), 500);
+      } else {
+        showToast(data.error || 'Failed to submit review', true);
+      }
+    })
+    .catch(error => {
+      showToast('Error submitting review', true);
+    });
+  }
+
+  function showToast(message, isError = false) {
+    const existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'toast' + (isError ? ' error' : '');
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  // View Switching
+  function switchView(view) {
+    document.querySelectorAll('.view-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.view === view);
+    });
+    document.querySelectorAll('.view-panel').forEach(panel => {
+      panel.classList.toggle('active', panel.id === view + 'View');
+    });
+  }
+
+  // Chip Handlers - now uses global SelectionManager with per-meal selection
+  function initChipHandlers() {
+    document.querySelectorAll('.menu-chip').forEach(chip => {
+      chip.addEventListener('click', function() {
+        const name = this.dataset.name;
+        const calories = parseInt(this.dataset.calories) || 0;
+        const hallCard = this.closest('.rec-card');
+        const hallName = hallCard ? hallCard.querySelector('.image-hall-name')?.textContent || 'Unknown' : 'Unknown';
+
+        if (typeof SelectionManager !== 'undefined') {
+          const selections = SelectionManager.getSelections();
+          // Check if this item is already selected FOR THE CURRENT MEAL TYPE
+          const existing = selections.findIndex(s => s.name === name && s.mealType === currentMeal);
+          
+          if (this.classList.contains('selected') || existing >= 0) {
+            // Remove item for current meal type only
+            if (existing >= 0) {
+              SelectionManager.removeItem(existing);
+            }
+            this.classList.remove('selected');
+          } else {
+            // Add item via SelectionManager for current meal type
+            const success = SelectionManager.addItem({
+              name: name,
+              calories: calories,
+              hall: hallName,
+              mealType: currentMeal, // Pass the meal type for per-meal selection
+              color: '#6366f1'
+            });
+            if (success) {
+              this.classList.add('selected');
+            }
+          }
+        }
+
+        updateDisplay();
+      });
+    });
+  }
+
+  // Update Display - now uses global SelectionManager
+  function updateDisplay() {
+    const selectedItems = getSelectedItems();
+    updateCalorieRing(selectedItems);
+    updateMealBreakdown(selectedItems);
+    updateSelectedList(selectedItems);
+    updateWarning(selectedItems);
+  }
+
+  function updateCalorieRing(selectedItems) {
+    const total = selectedItems.reduce((sum, item) => sum + (item.calories || 0), 0);
+    const progress = Math.min(total / calorieTarget, 1);
+    const circumference = 408; // 2 * π * 65
+    const offset = circumference * (1 - progress);
+
+    document.getElementById('currentCal').textContent = total;
+    const ring = document.getElementById('progressRing');
+    ring.style.strokeDasharray = circumference;
+    ring.style.strokeDashoffset = offset;
+
+    // Change color based on progress
+    if (total > calorieTarget) {
+      ring.style.stroke = '#f59e0b'; // Orange when over
+    } else if (progress > 0.8) {
+      ring.style.stroke = '#22c55e'; // Green when near goal
+    } else {
+      ring.style.stroke = 'url(#calorieGradient)'; // Gradient default
+    }
+  }
+
+  function updateMealBreakdown(selectedItems) {
+    const meals = { breakfast: 0, lunch: 0, dinner: 0 };
+    selectedItems.forEach(item => {
+      // Use mealType (stored when item was added) - NOT currentMeal
+      const meal = item.mealType || 'lunch'; // Default to lunch if not set
+      if (meals[meal] !== undefined) {
+        meals[meal] += item.calories || 0;
+      }
+    });
+
+    document.getElementById('breakfastCal').textContent = meals.breakfast;
+    document.getElementById('lunchCal').textContent = meals.lunch;
+    document.getElementById('dinnerCal').textContent = meals.dinner;
+  }
+
+  function updateSelectedList(selectedItems) {
+    const list = document.getElementById('selectedList');
+    const mealTotal = document.getElementById('mealTotal');
+    const total = selectedItems.reduce((s, i) => s + (i.calories || 0), 0);
+
+    mealTotal.textContent = total + ' kcal';
+
+    if (selectedItems.length === 0) {
+      list.innerHTML = `
+        <div class="tracker-empty">
+          <div class="tracker-empty-icon empty-icon-style">+</div>
+          <div class="tracker-empty-text">No items selected yet.<br>Click on dishes to add them!</div>
+        </div>
+      `;
+    } else {
+      list.innerHTML = selectedItems.map((item, idx) => `
+        <div class="tracker-item">
+          <div class="tracker-item-dot" style="background: ${item.color || '#6366f1'}"></div>
+          <div class="tracker-item-info">
+            <div class="tracker-item-name">${item.name}</div>
+            <div class="tracker-item-cal">${item.calories} kcal · ${item.hall || 'Unknown'}</div>
+          </div>
+          <button class="tracker-item-remove" onclick="removeItem(${idx})">×</button>
+        </div>
+      `).join('');
+    }
+  }
+
+  function updateWarning(selectedItems) {
+    const total = selectedItems.reduce((s, i) => s + (i.calories || 0), 0);
+    const warning = document.getElementById('calorieWarning');
+    warning.style.display = total > calorieTarget ? 'block' : 'none';
+  }
+
+  function removeItem(index) {
+    if (typeof SelectionManager !== 'undefined') {
+      const selections = SelectionManager.getSelections();
+      if (index >= 0 && index < selections.length) {
+        const removed = selections[index];
+        SelectionManager.removeItem(index);
+        
+        // Update chip UI
+        document.querySelectorAll('.menu-chip').forEach(chip => {
+          if (chip.dataset.name === removed.name) {
+            chip.classList.remove('selected');
+          }
+        });
+      }
+    }
+    updateDisplay();
+  }
+
+  function clearSelection() {
+    if (typeof SelectionManager !== 'undefined') {
+      SelectionManager.clearAll();
+    }
+    document.querySelectorAll('.menu-chip.selected').forEach(chip => {
+      chip.classList.remove('selected');
+    });
+    updateDisplay();
+  }
+
+  function confirmMeal() {
+    const selectedItems = getSelectedItems();
+    if (selectedItems.length === 0) {
+      showToast('Please select some items first', true);
+      return;
+    }
+
+    const mealName = currentMeal.charAt(0).toUpperCase() + currentMeal.slice(1);
+    const total = selectedItems.reduce((s, i) => s + (i.calories || 0), 0);
+
+    showToast(`${mealName} confirmed! ${total} kcal`);
+  }
+
+  // AI Chat
+  function sendMessage() {
+    const input = document.getElementById('aiInput');
+    const message = input.value.trim();
+    if (!message) return;
+
+    const chat = document.getElementById('chatMessages');
+    chat.innerHTML += `<div class="chat-message user">${escapeHtml(message)}</div>`;
+    input.value = '';
+    input.style.height = 'auto';
+    chat.scrollTop = chat.scrollHeight;
+
+    setTimeout(() => {
+      const response = generateResponse(message);
+      chat.innerHTML += `<div class="chat-message assistant">${response}</div>`;
+      chat.scrollTop = chat.scrollHeight;
+    }, 500);
+  }
+
+  function generateResponse(message) {
+    const lower = message.toLowerCase();
+    if (lower.includes('vegetarian') || lower.includes('vegan')) {
+      return "Based on today's menu, I'd recommend checking out the salad bar at Berkshire or the vegetable stir-fry at Hampshire. Both have excellent plant-based options!";
+    } else if (lower.includes('protein') || lower.includes('chicken')) {
+      return "For high-protein options today, Hampshire has grilled chicken breast and Worcester is serving beef stir-fry. Both are great choices!";
+    } else if (lower.includes('calorie') || lower.includes('healthy')) {
+      return "Looking for lighter options? Try the grilled fish at Berkshire (~280 kcal) or the soup and salad combo at Frank.";
+    } else {
+      return "I can help you find meals that match your dietary needs. What would you like to know more about?";
+    }
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+</script>
+
+{% endblock %}
