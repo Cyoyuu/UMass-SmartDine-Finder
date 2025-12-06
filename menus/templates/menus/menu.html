@@ -1,0 +1,915 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="menu-header">
+    <h1>Dining Hall Menus</h1>
+    <p>Welcome back, <strong>{{ user.username }}</strong>! Check out today's dining options.</p>
+  </div>
+
+  {% if error %}
+    <div class="error-message">
+      <h3>⚠️ Error Loading Menus</h3>
+      <p>{{ error }}</p>
+    </div>
+  {% elif dining_halls %}
+    <div class="dining-halls">
+      {% for hall in dining_halls %}
+        <div class="hall-card" data-hall-id="{{ hall.id }}">
+          <div class="hall-header">
+            <h2 class="hall-name">{{ hall.hallName }}</h2>
+            <div class="hall-meta">
+              <div class="hall-rating" title="Average Rating">
+                <span class="stars">{% if hall.avgRating %}{{ hall.avgRating }}{% else %}—{% endif %}</span>
+                <span class="star-icon">★</span>
+                <span class="review-count">({{ hall.reviewCount }})</span>
+              </div>
+              <span class="status-badge {% if hall.isOpen %}open{% else %}closed{% endif %}">
+                {% if hall.isOpen %}🟢 Open{% else %}🔴 Closed{% endif %}
+              </span>
+            </div>
+          </div>
+          
+          <div class="hall-hours">
+            <strong>Hours:</strong> {{ hall.hours }}
+          </div>
+
+          <div class="meals-container">
+            <div class="meal-section">
+              <button class="meal-toggle" onclick="toggleMeal('breakfast-{{ forloop.counter }}')">
+                <div class="meal-header">
+                  <span class="meal-title">🌅 Breakfast</span>
+                  <span class="meal-hours">{{ hall.mealHours.breakfast }}</span>
+                </div>
+                <span class="toggle-icon">▼</span>
+              </button>
+              <div class="meal-content" id="breakfast-{{ forloop.counter }}">
+                <ul class="meal-items">
+                  {% for item in hall.meals.breakfast %}
+                    <li>{{ item }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+
+            <div class="meal-section">
+              <button class="meal-toggle" onclick="toggleMeal('lunch-{{ forloop.counter }}')">
+                <div class="meal-header">
+                  <span class="meal-title">🌞 Lunch</span>
+                  <span class="meal-hours">{{ hall.mealHours.lunch }}</span>
+                </div>
+                <span class="toggle-icon">▼</span>
+              </button>
+              <div class="meal-content" id="lunch-{{ forloop.counter }}">
+                <ul class="meal-items">
+                  {% for item in hall.meals.lunch %}
+                    <li>{{ item }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+
+            <div class="meal-section">
+              <button class="meal-toggle" onclick="toggleMeal('dinner-{{ forloop.counter }}')">
+                <div class="meal-header">
+                  <span class="meal-title">🌙 Dinner</span>
+                  <span class="meal-hours">{{ hall.mealHours.dinner }}</span>
+                </div>
+                <span class="toggle-icon">▼</span>
+              </button>
+              <div class="meal-content" id="dinner-{{ forloop.counter }}">
+                <ul class="meal-items">
+                  {% for item in hall.meals.dinner %}
+                    <li>{{ item }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reviews Section -->
+          <div class="reviews-section">
+            <button class="review-toggle-btn" onclick="toggleReviews('reviews-{{ forloop.counter }}')">
+              <span class="review-btn-icon">💬</span>
+              <span>Reviews</span>
+              <span class="review-badge">{{ hall.reviewCount }}</span>
+              <span class="toggle-arrow">▼</span>
+            </button>
+            
+            <div class="reviews-panel" id="reviews-{{ forloop.counter }}">
+              <!-- Existing Reviews -->
+              <div class="reviews-list" id="reviews-list-{{ hall.id }}">
+                {% if hall.reviews %}
+                  {% for review in hall.reviews %}
+                    <div class="review-card">
+                      <div class="review-header">
+                        <div class="review-user">
+                          <span class="user-avatar">{{ review.username|slice:":1"|upper }}</span>
+                          <span class="user-name">{{ review.username }}</span>
+                        </div>
+                        <div class="review-rating">
+                          {% for i in "12345" %}
+                            {% if forloop.counter <= review.rating %}
+                              <span class="star filled">★</span>
+                            {% else %}
+                              <span class="star">☆</span>
+                            {% endif %}
+                          {% endfor %}
+                        </div>
+                      </div>
+                      <p class="review-text">{{ review.reviewText }}</p>
+                      {% if review.foodPreferences %}
+                        <div class="review-tags">
+                          {% for pref in review.foodPreferences %}
+                            <span class="pref-tag">{{ pref }}</span>
+                          {% endfor %}
+                        </div>
+                      {% endif %}
+                      <div class="review-date">{{ review.createdAt }}</div>
+                    </div>
+                  {% endfor %}
+                {% else %}
+                  <div class="no-reviews">
+                    <span class="no-reviews-icon">📝</span>
+                    <p>No reviews yet. Be the first to share your experience!</p>
+                  </div>
+                {% endif %}
+              </div>
+
+              <!-- Write Review Form -->
+              <div class="write-review-section">
+                <h4 class="write-review-title">Write a Review</h4>
+                <form class="review-form" onsubmit="submitReview(event, {{ hall.id }}, {{ forloop.counter }})">
+                  {% csrf_token %}
+                  
+                  <div class="rating-input">
+                    <label>Your Rating</label>
+                    <div class="star-rating" id="star-rating-{{ forloop.counter }}">
+                      {% for i in "54321" %}
+                        <input type="radio" name="rating" value="{{ i }}" id="star{{ i }}-{{ forloop.parentloop.counter }}" {% if i == "5" %}checked{% endif %}>
+                        <label for="star{{ i }}-{{ forloop.parentloop.counter }}">★</label>
+                      {% endfor %}
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="reviewText-{{ forloop.counter }}">Your Review</label>
+                    <textarea 
+                      id="reviewText-{{ forloop.counter }}" 
+                      name="reviewText" 
+                      placeholder="Share your dining experience..."
+                      rows="3"
+                      required
+                    ></textarea>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Food Preferences (select what you enjoyed)</label>
+                    <div class="preferences-grid">
+                      {% for value, label in food_preference_choices %}
+                        <label class="pref-checkbox">
+                          <input type="checkbox" name="foodPreferences" value="{{ value }}">
+                          <span class="pref-label">{{ label }}</span>
+                        </label>
+                      {% endfor %}
+                    </div>
+                  </div>
+
+                  <button type="submit" class="submit-review-btn">
+                    <span class="btn-text">Submit Review</span>
+                    <span class="btn-loading" style="display:none;">Submitting...</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h3>📋 No Menu Data Available</h3>
+      <p>We're having trouble loading the dining hall information. Please try again later.</p>
+    </div>
+  {% endif %}
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+    .menu-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .menu-header h1 {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 2.25rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .menu-header p {
+      color: #64748b;
+      font-size: 1.05rem;
+    }
+
+    .dining-halls {
+      display: grid;
+      gap: 1.75rem;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    }
+
+    .hall-card {
+      background: linear-gradient(145deg, #ffffff 0%, #fafbff 100%);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.08), 0 1px 3px rgba(0,0,0,0.05);
+      padding: 1.75rem;
+      border: 1px solid rgba(102, 126, 234, 0.12);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .hall-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15), 0 2px 6px rgba(0,0,0,0.06);
+    }
+
+    .hall-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+      gap: 1rem;
+    }
+
+    .hall-name {
+      font-family: 'DM Sans', sans-serif;
+      color: #1e293b;
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .hall-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    .hall-rating {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      padding: 0.4rem 0.75rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: #92400e;
+    }
+
+    .hall-rating .star-icon {
+      color: #f59e0b;
+    }
+
+    .hall-rating .review-count {
+      color: #a16207;
+      font-weight: 500;
+    }
+
+    .status-badge {
+      padding: 0.4rem 0.85rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      letter-spacing: 0.02em;
+    }
+
+    .status-badge.open {
+      background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+      color: #166534;
+    }
+
+    .status-badge.closed {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      color: #991b1b;
+    }
+
+    .hall-hours {
+      color: #64748b;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .meals-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .meal-section {
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .meal-toggle {
+      width: 100%;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border: none;
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #334155;
+      transition: all 0.2s;
+    }
+
+    .meal-toggle:hover {
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    }
+
+    .meal-header {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.35rem;
+    }
+
+    .meal-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .meal-hours {
+      font-size: 0.8rem;
+      color: #64748b;
+      font-weight: 500;
+      background: #e2e8f0;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .toggle-icon, .toggle-arrow {
+      transition: transform 0.3s ease;
+      color: #94a3b8;
+    }
+
+    .meal-toggle.active .toggle-icon {
+      transform: rotate(180deg);
+    }
+
+    .meal-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+    }
+
+    .meal-content.expanded {
+      max-height: 500px;
+    }
+
+    .meal-items {
+      padding: 1rem 1.25rem;
+      margin: 0;
+      background: #fff;
+      list-style: none;
+    }
+
+    .meal-items li {
+      padding: 0.6rem 0;
+      border-bottom: 1px solid #f1f5f9;
+      color: #475569;
+      font-size: 0.95rem;
+    }
+
+    .meal-items li:last-child {
+      border-bottom: none;
+    }
+
+    /* Reviews Section Styles */
+    .reviews-section {
+      margin-top: 1.25rem;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 1.25rem;
+    }
+
+    .review-toggle-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.875rem 1.25rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 14px rgba(102, 126, 234, 0.35);
+    }
+
+    .review-toggle-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.45);
+    }
+
+    .review-toggle-btn .review-btn-icon {
+      font-size: 1.1rem;
+    }
+
+    .review-toggle-btn .review-badge {
+      background: rgba(255,255,255,0.25);
+      padding: 0.15rem 0.5rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      margin-left: 0.25rem;
+    }
+
+    .review-toggle-btn .toggle-arrow {
+      margin-left: auto;
+      color: rgba(255,255,255,0.8);
+    }
+
+    .review-toggle-btn.active .toggle-arrow {
+      transform: rotate(180deg);
+    }
+
+    .reviews-panel {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease-out;
+    }
+
+    .reviews-panel.expanded {
+      max-height: 2000px;
+    }
+
+    .reviews-list {
+      margin-top: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .review-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: box-shadow 0.2s;
+    }
+
+    .review-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+
+    .review-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .review-user {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .user-name {
+      font-weight: 600;
+      color: #1e293b;
+      font-size: 0.95rem;
+    }
+
+    .review-rating {
+      display: flex;
+      gap: 2px;
+    }
+
+    .review-rating .star {
+      color: #cbd5e1;
+      font-size: 1rem;
+    }
+
+    .review-rating .star.filled {
+      color: #f59e0b;
+    }
+
+    .review-text {
+      color: #475569;
+      line-height: 1.6;
+      margin: 0 0 0.75rem 0;
+      font-size: 0.95rem;
+    }
+
+    .review-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .pref-tag {
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+      color: #047857;
+      padding: 0.25rem 0.65rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: capitalize;
+    }
+
+    .review-date {
+      color: #94a3b8;
+      font-size: 0.8rem;
+    }
+
+    .no-reviews {
+      text-align: center;
+      padding: 2rem;
+      color: #64748b;
+    }
+
+    .no-reviews-icon {
+      font-size: 2.5rem;
+      display: block;
+      margin-bottom: 0.75rem;
+    }
+
+    /* Write Review Form */
+    .write-review-section {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px dashed #e2e8f0;
+    }
+
+    .write-review-title {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0 0 1.25rem 0;
+      font-size: 1.1rem;
+    }
+
+    .review-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .rating-input {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .rating-input label {
+      font-weight: 600;
+      color: #334155;
+      font-size: 0.9rem;
+    }
+
+    .star-rating {
+      display: flex;
+      flex-direction: row-reverse;
+      justify-content: flex-end;
+      gap: 0.25rem;
+    }
+
+    .star-rating input {
+      display: none;
+    }
+
+    .star-rating label {
+      cursor: pointer;
+      font-size: 1.75rem;
+      color: #cbd5e1;
+      transition: color 0.15s;
+    }
+
+    .star-rating input:checked ~ label,
+    .star-rating label:hover,
+    .star-rating label:hover ~ label {
+      color: #f59e0b;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .form-group label {
+      font-weight: 600;
+      color: #334155;
+      font-size: 0.9rem;
+    }
+
+    .form-group textarea {
+      padding: 0.875rem 1rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 90px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+    }
+
+    .form-group textarea::placeholder {
+      color: #94a3b8;
+    }
+
+    .preferences-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.5rem;
+    }
+
+    .pref-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 0.85rem;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.85rem;
+    }
+
+    .pref-checkbox:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    .pref-checkbox input {
+      display: none;
+    }
+
+    .pref-checkbox input:checked + .pref-label {
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    .pref-checkbox:has(input:checked) {
+      background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+      border-color: #667eea;
+    }
+
+    .pref-label {
+      color: #475569;
+      font-weight: 500;
+    }
+
+    .submit-review-btn {
+      padding: 0.9rem 1.5rem;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    }
+
+    .submit-review-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+    }
+
+    .submit-review-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .error-message, .empty-state {
+      text-align: center;
+      padding: 2rem;
+      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+      border: 1px solid #fecaca;
+      border-radius: 12px;
+      color: #991b1b;
+    }
+
+    .empty-state {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border-color: #bae6fd;
+      color: #0369a1;
+    }
+
+    /* Success Toast */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #fff;
+      padding: 1rem 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+      font-weight: 600;
+      z-index: 1000;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    @media (max-width: 768px) {
+      .dining-halls {
+        grid-template-columns: 1fr;
+      }
+      
+      .hall-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+
+      .hall-meta {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .preferences-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+
+  <script>
+    function toggleMeal(mealId) {
+      const content = document.getElementById(mealId);
+      const button = content.previousElementSibling;
+      
+      if (content.classList.contains('expanded')) {
+        content.classList.remove('expanded');
+        button.classList.remove('active');
+      } else {
+        content.classList.add('expanded');
+        button.classList.add('active');
+      }
+    }
+
+    function toggleReviews(reviewsId) {
+      const panel = document.getElementById(reviewsId);
+      const button = panel.previousElementSibling;
+      
+      if (panel.classList.contains('expanded')) {
+        panel.classList.remove('expanded');
+        button.classList.remove('active');
+      } else {
+        panel.classList.add('expanded');
+        button.classList.add('active');
+      }
+    }
+
+    function showToast(message, isError = false) {
+      const existingToast = document.querySelector('.toast');
+      if (existingToast) existingToast.remove();
+
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      if (isError) {
+        toast.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+      }
+      document.body.appendChild(toast);
+
+      setTimeout(() => toast.classList.add('show'), 10);
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function submitReview(event, hallId, loopIndex) {
+      event.preventDefault();
+      
+      const form = event.target;
+      const submitBtn = form.querySelector('.submit-review-btn');
+      const btnText = submitBtn.querySelector('.btn-text');
+      const btnLoading = submitBtn.querySelector('.btn-loading');
+      
+      btnText.style.display = 'none';
+      btnLoading.style.display = 'inline';
+      submitBtn.disabled = true;
+
+      const formData = new FormData(form);
+      
+      fetch(`/menus/api/review/${hallId}/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const reviewsList = document.getElementById(`reviews-list-${hallId}`);
+          const noReviews = reviewsList.querySelector('.no-reviews');
+          if (noReviews) noReviews.remove();
+
+          const review = data.review;
+          const reviewHtml = `
+            <div class="review-card" style="animation: fadeIn 0.3s ease">
+              <div class="review-header">
+                <div class="review-user">
+                  <span class="user-avatar">${review.username.charAt(0).toUpperCase()}</span>
+                  <span class="user-name">${review.username}</span>
+                </div>
+                <div class="review-rating">
+                  ${'<span class="star filled">★</span>'.repeat(review.rating)}
+                  ${'<span class="star">☆</span>'.repeat(5 - review.rating)}
+                </div>
+              </div>
+              <p class="review-text">${review.reviewText}</p>
+              ${review.foodPreferences.length ? `
+                <div class="review-tags">
+                  ${review.foodPreferences.map(pref => `<span class="pref-tag">${pref}</span>`).join('')}
+                </div>
+              ` : ''}
+              <div class="review-date">${review.createdAt}</div>
+            </div>
+          `;
+          reviewsList.insertAdjacentHTML('afterbegin', reviewHtml);
+
+          const hallCard = form.closest('.hall-card');
+          const reviewBadge = hallCard.querySelector('.review-badge');
+          const currentCount = parseInt(reviewBadge.textContent);
+          reviewBadge.textContent = currentCount + 1;
+
+          form.reset();
+          form.querySelector('input[name="rating"][value="5"]').checked = true;
+
+          showToast('✓ Review submitted successfully!');
+        } else {
+          showToast('Error: ' + (data.error || 'Failed to submit review'), true);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showToast('Error submitting review. Please try again.', true);
+      })
+      .finally(() => {
+        btnText.style.display = 'inline';
+        btnLoading.style.display = 'none';
+        submitBtn.disabled = false;
+      });
+    }
+  </script>
+
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+{% endblock %}
+
