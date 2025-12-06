@@ -1,6 +1,9 @@
 from django.http import JsonResponse
 from .models import DiningHall
 from datetime import datetime
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import DiningHall, Review
 
 print("### menus_view loaded ###")
 
@@ -28,3 +31,27 @@ def menus_view(request):
         })
 
     return JsonResponse(response, safe=False)
+
+@login_required
+def writeReview(request, hall_id):
+    hall = get_object_or_404(DiningHall, pk=hall_id)
+
+    if request.method == "POST":
+        rating = request.POST.get("rating")
+        reviewText = request.POST.get("reviewText")
+
+        Review.objects.create(
+            username=request.user.username,
+            diningHall=hall,
+            rating=rating,
+            reviewText=reviewText,
+            likes=0
+        )
+
+        return redirect("dining_hall_detail", hall_id=hall.id)
+
+    context = {
+        "username": request.user.username,
+        "diningHall": hall,
+    }
+    return render(request, "write_review.html", context)
