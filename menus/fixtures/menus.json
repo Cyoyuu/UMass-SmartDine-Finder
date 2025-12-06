@@ -1,38 +1,146 @@
 [
-    {
-      "model": "menus.dininghall",
-      "pk": 1,
-      "fields": {
-        "hallName": "Hamp",
-        "hours": "07:00-20:00",
-        "meals": {
-          "breakfast": ["Oatmeal", "Scrambled Eggs"],
-          "lunch": ["Veg Curry", "Rice"],
-          "dinner": ["Pasta", "Salad"]
-        }
-      }
-    },
-    {
-      "model": "menus.dininghall",
-      "pk": 2,
-      "fields": {
-        "hallName": "Berkshire",
-        "hours": "08:00-19:00",
-        "meals": {
-          "breakfast": ["Bagel", "Coffee"],
-          "lunch": ["Burger", "Fries"],
-          "dinner": ["Steak", "Mashed Potatoes"]
-        }
-      }
-    },
-    {
-      "model": "menus.dininghall",
-      "pk": 3,
-      "fields": {
-        "hallName": "Franklin",
-        "hours": "09:00-21:00",
-        "meals": {}
+  {
+    "model": "menus.dininghall",
+    "pk": 1,
+    "fields": {
+      "hallName": "Hamp",
+      "hours": "07:00-20:00",
+      "mealHours": {
+        "breakfast": "07:00-10:30",
+        "lunch": "11:00-14:30",
+        "dinner": "16:30-20:00"
+      },
+      "meals": {
+        "breakfast": [
+          {"name": "Oatmeal", "calories": 150, "allergens": [], "dietTags": ["vegetarian", "vegan"]},
+          {"name": "Scrambled Eggs", "calories": 180, "allergens": ["eggs"], "dietTags": ["vegetarian"]},
+          {"name": "Pancakes", "calories": 350, "allergens": ["milk", "eggs", "wheat", "gluten"], "dietTags": ["vegetarian"]},
+          {"name": "Fresh Fruit Bowl", "calories": 80, "allergens": [], "dietTags": ["vegetarian", "vegan"]},
+          {"name": "Greek Yogurt Parfait", "calories": 220, "allergens": ["milk"], "dietTags": ["vegetarian"]}
+        ],
+        "lunch": [
+          {"name": "Veg Curry", "calories": 320, "allergens": [], "dietTags": ["vegetarian", "vegan", "halal"]},
+          {"name": "Steamed Rice", "calories": 200, "allergens": [], "dietTags": ["vegetarian", "vegan", "halal"]},
+          {"name": "Grilled Chicken Breast", "calories": 280, "allergens": [], "dietTags": ["high_protein", "halal"]},
+          {"name": "Caesar Salad", "calories": 250, "allergens": ["milk", "eggs", "gluten"], "dietTags": []},
+          {"name": "Tofu Stir Fry", "calories": 240, "allergens": ["soy"], "dietTags": ["vegetarian", "vegan"]}
+        ],
+        "dinner": [
+          {"name": "Pasta Marinara", "calories": 420, "allergens": ["wheat", "gluten"], "dietTags": ["vegetarian", "vegan"]},
+          {"name": "Garden Salad", "calories": 120, "allergens": [], "dietTags": ["vegetarian", "vegan"]},
+          {"name": "Grilled Salmon", "calories": 350, "allergens": [], "dietTags": ["high_protein"]},
+          {"name": "Roasted Vegetables", "calories": 150, "allergens": [], "dietTags": ["vegetarian", "vegan", "halal"]},
+          {"name": "Cheese Pizza", "calories": 480, "allergens": ["milk", "wheat", "gluten"], "dietTags": ["vegetarian"]}
+        ]
       }
     }
-  ]
-  
+  },
+  {
+    "model": "menus.dininghall",
+    "pk": 2,
+    "fields": {
+      "hallName": "Berkshire",
+      "hours": "07:30-21:00",
+      "mealHours": {
+        "breakfast": "07:30-10:00",
+        "lunch": "11:00-14:00",
+        "dinner": "17:00-21:00"
+      },
+      "meals": {
+        "breakfast": [
+          {"name": "Bagel with Cream Cheese", "calories": 320, "allergens": ["wheat", "gluten", "milk"], "dietTags": ["vegetarian"]},
+          {"name": "Coffee", "calories": 5, "allergens": [], "dietTags": ["vegetarian", "vegan"]},
+          {"name": "Veggie Omelette", "calories": 280, "allergens": ["eggs", "milk"], "dietTags": ["vegetarian"]},
+          {"name": "Avocado Toast", "calories": 290, "allergens": ["wheat", "gluten"], "dietTags": ["vegetarian", "vegan"]},
+          {"name": "Breakfast Burrito", "calories": 520, "allergens": ["wheat", "eggs", "milk"], "dietTags": []}
+        ],
+        "lunch": [
+          {"name": "Beef Burger", "calories": 580, "allergens": ["wheat", "gluten"], "dietTags": ["high_protein"]},
+          {"name": "Sweet Potato Fries", "calories": 280, "allergens": [], "dietTags": ["vegetarian", "vegan"]},
+          {"name": "Veggie Burger", "calories": 420, "allergens": ["wheat", "gluten", "soy"], "dietTags": ["vegetarian"]},
+          {"name": "Chicken Wrap", "calories": 450, "allergens": ["wheat", "gluten"], "dietTags": ["high_protein", "halal"]},
+          {"name": "Mediterranean Bowl", "calories": 380, "allergens": [], "dietTags": ["vegetarian", "halal"]}
+        ],
+        "dinner": [
+          {"name": "Grilled Steak", "calories": 520, "allergens": [], "dietTags": ["high_protein"]},
+          {"name": "Mashed Potatoes", "calories": 210, "allergens": ["milk"], "dietTags": ["vegetarian"]},
+          {"name": "BBQ Ribs", "calories": 680, "allergens": [], "dietTags": ["high_protein"]},
+          {"name": "Steamed Broccoli", "calories": 55, "allergens": [], "dietTags": ["vegetarian", "vegan", "halal"]},
+          {"name": "Mac and Cheese", "calories": 450, "allergens": ["milk", "wheat", "gluten"], "dietTags": ["vegetarian"]}
+        ]
+      }
+    }
+  },
+  {
+    "model": "menus.dininghall",
+    "pk": 3,
+    "fields": {
+      "hallName": "Franklin",
+      "hours": "08:00-21:00",
+      "mealHours": {
+        "breakfast": "08:00-10:30",
+        "lunch": "11:00-14:30",
+        "dinner": "17:00-21:00"
+      },
+      "meals": {
+        "breakfast": [
+          {"name": "Belgian Waffles", "calories": 380, "allergens": ["wheat", "gluten", "eggs", "milk"], "dietTags": ["vegetarian"]},
+          {"name": "Turkey Sausage", "calories": 180, "allergens": [], "dietTags": ["high_protein", "halal"]},
+          {"name": "Overnight Oats", "calories": 220, "allergens": ["milk"], "dietTags": ["vegetarian"]},
+          {"name": "Smoothie Bowl", "calories": 280, "allergens": [], "dietTags": ["vegetarian", "vegan"]},
+          {"name": "Egg White Omelette", "calories": 120, "allergens": ["eggs"], "dietTags": ["vegetarian", "high_protein"]}
+        ],
+        "lunch": [
+          {"name": "Pho Noodle Soup", "calories": 420, "allergens": ["wheat", "gluten", "soy"], "dietTags": []},
+          {"name": "Falafel Plate", "calories": 480, "allergens": ["wheat"], "dietTags": ["vegetarian", "vegan", "halal"]},
+          {"name": "Sushi Roll", "calories": 320, "allergens": ["soy"], "dietTags": []},
+          {"name": "Quinoa Salad", "calories": 280, "allergens": [], "dietTags": ["vegetarian", "vegan"]},
+          {"name": "Tandoori Chicken", "calories": 350, "allergens": [], "dietTags": ["high_protein", "halal"]}
+        ],
+        "dinner": [
+          {"name": "Thai Green Curry", "calories": 450, "allergens": [], "dietTags": ["halal"]},
+          {"name": "Jasmine Rice", "calories": 180, "allergens": [], "dietTags": ["vegetarian", "vegan", "halal"]},
+          {"name": "Teriyaki Tofu", "calories": 280, "allergens": ["soy"], "dietTags": ["vegetarian", "vegan"]},
+          {"name": "Pad Thai", "calories": 520, "allergens": ["soy", "eggs"], "dietTags": []},
+          {"name": "Spring Rolls", "calories": 180, "allergens": ["wheat", "gluten"], "dietTags": ["vegetarian"]}
+        ]
+      }
+    }
+  },
+  {
+    "model": "menus.dininghall",
+    "pk": 4,
+    "fields": {
+      "hallName": "Worcester",
+      "hours": "07:00-22:00",
+      "mealHours": {
+        "breakfast": "07:00-10:00",
+        "lunch": "11:00-15:00",
+        "dinner": "16:30-22:00"
+      },
+      "meals": {
+        "breakfast": [
+          {"name": "French Toast", "calories": 320, "allergens": ["wheat", "gluten", "eggs", "milk"], "dietTags": ["vegetarian"]},
+          {"name": "Bacon", "calories": 220, "allergens": [], "dietTags": ["high_protein"]},
+          {"name": "Hash Browns", "calories": 250, "allergens": [], "dietTags": ["vegetarian", "vegan"]},
+          {"name": "Fresh Orange Juice", "calories": 110, "allergens": [], "dietTags": ["vegetarian", "vegan"]},
+          {"name": "Chia Pudding", "calories": 180, "allergens": ["milk"], "dietTags": ["vegetarian"]}
+        ],
+        "lunch": [
+          {"name": "Grilled Cheese Sandwich", "calories": 420, "allergens": ["wheat", "gluten", "milk"], "dietTags": ["vegetarian"]},
+          {"name": "Tomato Soup", "calories": 150, "allergens": [], "dietTags": ["vegetarian", "vegan"]},
+          {"name": "Buffalo Wings", "calories": 480, "allergens": ["milk"], "dietTags": ["high_protein"]},
+          {"name": "Garden Wrap", "calories": 280, "allergens": ["wheat", "gluten"], "dietTags": ["vegetarian", "vegan"]},
+          {"name": "Lamb Kebab", "calories": 380, "allergens": [], "dietTags": ["high_protein", "halal"]}
+        ],
+        "dinner": [
+          {"name": "Lobster Roll", "calories": 520, "allergens": ["wheat", "gluten", "milk"], "dietTags": []},
+          {"name": "Clam Chowder", "calories": 280, "allergens": ["milk"], "dietTags": []},
+          {"name": "Baked Cod", "calories": 200, "allergens": [], "dietTags": ["high_protein"]},
+          {"name": "Stuffed Peppers", "calories": 320, "allergens": [], "dietTags": ["vegetarian", "halal"]},
+          {"name": "Mushroom Risotto", "calories": 380, "allergens": ["milk"], "dietTags": ["vegetarian"]}
+        ]
+      }
+    }
+  }
+]

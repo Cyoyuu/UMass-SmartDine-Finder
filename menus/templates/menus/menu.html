@@ -1,915 +1,1596 @@
 {% extends "base.html" %}
+{% load static %}
 {% block content %}
-  <div class="menu-header">
-    <h1>Dining Hall Menus</h1>
-    <p>Welcome back, <strong>{{ user.username }}</strong>! Check out today's dining options.</p>
-  </div>
 
-  {% if error %}
-    <div class="error-message">
-      <h3>⚠️ Error Loading Menus</h3>
-      <p>{{ error }}</p>
+<!-- Store reviews data for JavaScript -->
+<script>
+  const hallReviewsData = {
+    {% for hall in dining_halls %}
+    "{{ hall.id }}": {
+      "id": {{ hall.id }},
+      "hallName": "{{ hall.hallName }}",
+      "reviews": [
+        {% for review in hall.reviews %}
+        {
+          "id": {{ review.id }},
+          "username": "{{ review.username }}",
+          "rating": {{ review.rating }},
+          "reviewText": "{{ review.reviewText|escapejs }}",
+          "createdAt": "{{ review.createdAt }}",
+          "isOwner": {% if review.isOwner %}true{% else %}false{% endif %}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+      ]
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  };
+</script>
+
+<style>
+  main {
+    max-width: 1200px !important;
+    padding: 20px !important;
+    background: transparent !important;
+    border: none !important;
+  }
+
+  /* Page Header - Gradient style */
+  .page-header {
+    margin-bottom: 24px;
+    padding: 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .page-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 250px;
+    height: 250px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+  }
+  
+  .page-header-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .page-header-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .page-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 4px 0;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+    color: rgba(255,255,255,0.85);
+    margin: 0;
+  }
+
+  /* Date Selector */
+  .date-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 16px 20px;
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    overflow-x: auto;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+
+  .date-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 70px;
+    border: 2px solid transparent;
+    position: relative;
+  }
+
+  .date-item:hover {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+  }
+
+  .date-item.active {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-color: #6366f1;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    transform: scale(1.05);
+  }
+
+  .date-item.active .date-day,
+  .date-item.active .date-num {
+    color: #fff;
+  }
+
+  .date-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background: #6366f1;
+    border-radius: 50%;
+  }
+
+  .date-day {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .date-num {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-top: 2px;
+  }
+
+  .date-item.today:not(.active) {
+    border-color: #6366f1;
+    background: #eef2ff;
+  }
+
+  .date-item.today:not(.active) .date-day {
+    color: #6366f1;
+  }
+
+  .date-item.today:not(.active) .date-num {
+    color: #6366f1;
+  }
+  
+  /* Weekend date styling */
+  .date-item.weekend:not(.active) {
+    background: #fef3c7;
+  }
+  
+  .date-item.weekend:not(.active) .date-day {
+    color: #d97706;
+  }
+  
+  .weekend-dot {
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    background: #f59e0b;
+    border-radius: 50%;
+  }
+  
+  .date-item.active .weekend-dot {
+    background: rgba(255,255,255,0.8);
+  }
+  
+  /* No items styling */
+  .menu-item.no-items {
+    color: #94a3b8;
+    font-style: italic;
+    background: transparent;
+    border: none;
+  }
+  
+  /* Menu item clickable */
+  .menu-item.clickable {
+    cursor: pointer;
+  }
+  
+  .menu-item.clickable:hover {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    border-color: transparent;
+  }
+
+  /* Dish Info Card Popup */
+  .dish-info-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .dish-info-overlay.show {
+    display: flex;
+  }
+  
+  .dish-info-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    position: relative;
+    animation: slideUp 0.3s ease;
+  }
+  
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  
+  .dish-info-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f1f5f9;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  
+  .dish-info-close:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+  }
+  
+  .dish-info-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 16px 0;
+    padding-right: 40px;
+  }
+  
+  .dish-info-calories {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #92400e;
+    margin-bottom: 16px;
+  }
+  
+  .dish-info-section {
+    margin-bottom: 12px;
+  }
+  
+  .dish-info-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  
+  .dish-info-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  
+  .dish-tag {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .dish-tag.allergen {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+  }
+  
+  .dish-tag.diet {
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+  }
+  
+  .dish-info-ingredients {
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.5;
+  }
+  
+  .dish-info-add {
+    width: 100%;
+    padding: 12px;
+    margin-top: 16px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .dish-info-add:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+  }
+
+  /* Meal Tabs */
+  .meal-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding: 6px;
+    background: #f1f5f9;
+    border-radius: 12px;
+    width: fit-content;
+  }
+
+  .meal-tab {
+    padding: 10px 24px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .meal-tab:hover {
+    background: rgba(255,255,255,0.5);
+    color: #0f172a;
+  }
+
+  .meal-tab.active {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  }
+
+  .meal-tab.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+    text-decoration: line-through;
+  }
+
+  .weekend-notice-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #fbbf24;
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+
+  .notice-icon-style {
+    width: 28px;
+    height: 28px;
+    background: #f59e0b;
+    color: #fff;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .weekend-notice-bar .notice-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: #92400e;
+  }
+
+  /* Halls Grid */
+  .halls-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  /* Hall Card */
+  .hall-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+
+  .hall-card:hover {
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    transform: translateY(-3px);
+    border-color: #d1d5db;
+  }
+
+  /* Card Image */
+  .card-image {
+    width: 100%;
+    height: 120px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Fallback gradient backgrounds for each hall */
+  .hall-card[data-hall-name="Worcester"] .card-image { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+  .hall-card[data-hall-name="Hampshire"] .card-image { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+  .hall-card[data-hall-name="Berkshire"] .card-image { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+  .hall-card[data-hall-name="Franklin"] .card-image { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+
+  .image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.6) 100%);
+  }
+
+  .hall-name-overlay {
+    position: absolute;
+    bottom: 10px;
+    left: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  .status-badge-overlay {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .status-badge-overlay.open {
+    background: rgba(34, 197, 94, 0.9);
+    color: #fff;
+  }
+
+  .status-badge-overlay.closed {
+    background: rgba(239, 68, 68, 0.9);
+    color: #fff;
+  }
+
+  /* Card Content */
+  .card-content {
+    padding: 14px;
+  }
+
+  .card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .hours-text {
+    font-size: 12px;
+    color: #64748b;
+  }
+
+  .rating-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .rating-display {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    background: #fef3c7;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+
+  .rating-value {
+    font-weight: 700;
+    color: #92400e;
+  }
+
+  .rating-star {
+    color: #f59e0b;
+    font-size: 11px;
+  }
+
+  .rating-count {
+    font-size: 10px;
+    color: #a16207;
+  }
+
+  .review-btn {
+    padding: 5px 12px;
+    background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+    border: 1px solid #c4b5fd;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #6366f1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .review-btn:hover {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-color: transparent;
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  }
+
+  /* Menu Items */
+  .menu-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .menu-item {
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    font-size: 12px;
+    color: #374151;
+  }
+
+  .menu-item:hover {
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+  }
+
+  .menu-item.more {
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    color: #6366f1;
+    font-weight: 600;
+    cursor: pointer;
+    border-color: #c7d2fe;
+  }
+
+  .menu-item.more:hover {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+  }
+
+  /* Expanded Menu Panel */
+  .menu-panel {
+    display: none;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .menu-panel.active {
+    display: block;
+  }
+
+  .menu-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .menu-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  /* Empty State */
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .empty-state p {
+    color: #94a3b8;
+    font-size: 14px;
+    margin: 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .halls-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .date-selector {
+      padding: 8px;
+    }
+
+    .date-item {
+      padding: 8px 12px;
+      min-width: 56px;
+    }
+
+    .date-num {
+      font-size: 16px;
+    }
+  }
+</style>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="page-header-content">
+    <div>
+      <h1 class="page-title">Dining Hall Menus</h1>
+      <p class="page-subtitle">View menus from all UMass dining halls</p>
     </div>
-  {% elif dining_halls %}
-    <div class="dining-halls">
-      {% for hall in dining_halls %}
-        <div class="hall-card" data-hall-id="{{ hall.id }}">
-          <div class="hall-header">
-            <h2 class="hall-name">{{ hall.hallName }}</h2>
-            <div class="hall-meta">
-              <div class="hall-rating" title="Average Rating">
-                <span class="stars">{% if hall.avgRating %}{{ hall.avgRating }}{% else %}—{% endif %}</span>
-                <span class="star-icon">★</span>
-                <span class="review-count">({{ hall.reviewCount }})</span>
-              </div>
-              <span class="status-badge {% if hall.isOpen %}open{% else %}closed{% endif %}">
-                {% if hall.isOpen %}🟢 Open{% else %}🔴 Closed{% endif %}
-              </span>
-            </div>
-          </div>
-          
-          <div class="hall-hours">
-            <strong>Hours:</strong> {{ hall.hours }}
-          </div>
+  </div>
+</div>
 
-          <div class="meals-container">
-            <div class="meal-section">
-              <button class="meal-toggle" onclick="toggleMeal('breakfast-{{ forloop.counter }}')">
-                <div class="meal-header">
-                  <span class="meal-title">🌅 Breakfast</span>
-                  <span class="meal-hours">{{ hall.mealHours.breakfast }}</span>
-                </div>
-                <span class="toggle-icon">▼</span>
-              </button>
-              <div class="meal-content" id="breakfast-{{ forloop.counter }}">
-                <ul class="meal-items">
-                  {% for item in hall.meals.breakfast %}
-                    <li>{{ item }}</li>
-                  {% endfor %}
-                </ul>
-              </div>
-            </div>
+<!-- Date Selector -->
+<div class="date-selector" id="dateSelector">
+  <!-- Dates will be generated by JavaScript -->
+</div>
 
-            <div class="meal-section">
-              <button class="meal-toggle" onclick="toggleMeal('lunch-{{ forloop.counter }}')">
-                <div class="meal-header">
-                  <span class="meal-title">🌞 Lunch</span>
-                  <span class="meal-hours">{{ hall.mealHours.lunch }}</span>
-                </div>
-                <span class="toggle-icon">▼</span>
-              </button>
-              <div class="meal-content" id="lunch-{{ forloop.counter }}">
-                <ul class="meal-items">
-                  {% for item in hall.meals.lunch %}
-                    <li>{{ item }}</li>
-                  {% endfor %}
-                </ul>
-              </div>
-            </div>
+<!-- Meal Tabs -->
+<div class="meal-tabs" id="mealTabs">
+  <button class="meal-tab {% if not is_weekend %}active{% endif %}" data-meal="breakfast" id="breakfastMealTab" onclick="switchMeal('breakfast')">Breakfast</button>
+  <button class="meal-tab {% if is_weekend %}active{% endif %}" data-meal="lunch" onclick="switchMeal('lunch')">Lunch</button>
+  <button class="meal-tab" data-meal="dinner" onclick="switchMeal('dinner')">Dinner</button>
+</div>
+<!-- Weekend No Breakfast Notice -->
+<div class="weekend-notice-bar" id="weekendNoticeMenu" style="{% if not is_weekend %}display: none;{% endif %}">
+  <span class="notice-text">It's the weekend! Dining halls don't serve breakfast on Saturdays and Sundays.</span>
+</div>
 
-            <div class="meal-section">
-              <button class="meal-toggle" onclick="toggleMeal('dinner-{{ forloop.counter }}')">
-                <div class="meal-header">
-                  <span class="meal-title">🌙 Dinner</span>
-                  <span class="meal-hours">{{ hall.mealHours.dinner }}</span>
-                </div>
-                <span class="toggle-icon">▼</span>
-              </button>
-              <div class="meal-content" id="dinner-{{ forloop.counter }}">
-                <ul class="meal-items">
-                  {% for item in hall.meals.dinner %}
-                    <li>{{ item }}</li>
-                  {% endfor %}
-                </ul>
-              </div>
-            </div>
-          </div>
+<!-- Halls Grid -->
+{% if error %}
+  <div class="empty-state">
+    <p>{{ error }}</p>
+  </div>
+{% elif dining_halls %}
+  <div class="halls-grid">
+    {% for hall in dining_halls %}
+    <div class="hall-card" data-hall-id="{{ hall.id }}" data-hall-name="{{ hall.hallName }}">
+      <!-- Card Image -->
+      <div class="card-image">
+        {% if hall.hallName == "Worcester" %}
+          <img src="{% static 'worcaster.png' %}" alt="{{ hall.hallName }}">
+        {% elif hall.hallName == "Hampshire" %}
+          <img src="{% static 'hampshire.png' %}" alt="{{ hall.hallName }}">
+        {% elif hall.hallName == "Berkshire" %}
+          <img src="{% static 'berkshire.png' %}" alt="{{ hall.hallName }}">
+        {% elif hall.hallName == "Franklin" %}
+          <img src="{% static 'franklin.png' %}" alt="{{ hall.hallName }}">
+        {% endif %}
+        <div class="image-overlay"></div>
+        <span class="hall-name-overlay">{{ hall.hallName }}</span>
+        <span class="status-badge-overlay {% if hall.isOpen %}open{% else %}closed{% endif %}">
+          {% if hall.isOpen %}Open{% else %}Closed{% endif %}
+        </span>
+      </div>
 
-          <!-- Reviews Section -->
-          <div class="reviews-section">
-            <button class="review-toggle-btn" onclick="toggleReviews('reviews-{{ forloop.counter }}')">
-              <span class="review-btn-icon">💬</span>
-              <span>Reviews</span>
-              <span class="review-badge">{{ hall.reviewCount }}</span>
-              <span class="toggle-arrow">▼</span>
+      <!-- Card Content -->
+      <div class="card-content">
+        <div class="card-meta">
+          <span class="hours-text">{{ hall.hours }}</span>
+          <div class="rating-group">
+            <div class="rating-display">
+              <span class="rating-value">{% if hall.avgRating %}{{ hall.avgRating }}{% else %}--{% endif %}</span>
+              <span class="rating-star">★</span>
+              <span class="rating-count">({{ hall.reviewCount }})</span>
+            </div>
+            <button class="review-btn" onclick="openReviewsModal({{ hall.id }})">
+              Reviews
             </button>
-            
-            <div class="reviews-panel" id="reviews-{{ forloop.counter }}">
-              <!-- Existing Reviews -->
-              <div class="reviews-list" id="reviews-list-{{ hall.id }}">
-                {% if hall.reviews %}
-                  {% for review in hall.reviews %}
-                    <div class="review-card">
-                      <div class="review-header">
-                        <div class="review-user">
-                          <span class="user-avatar">{{ review.username|slice:":1"|upper }}</span>
-                          <span class="user-name">{{ review.username }}</span>
-                        </div>
-                        <div class="review-rating">
-                          {% for i in "12345" %}
-                            {% if forloop.counter <= review.rating %}
-                              <span class="star filled">★</span>
-                            {% else %}
-                              <span class="star">☆</span>
-                            {% endif %}
-                          {% endfor %}
-                        </div>
-                      </div>
-                      <p class="review-text">{{ review.reviewText }}</p>
-                      {% if review.foodPreferences %}
-                        <div class="review-tags">
-                          {% for pref in review.foodPreferences %}
-                            <span class="pref-tag">{{ pref }}</span>
-                          {% endfor %}
-                        </div>
-                      {% endif %}
-                      <div class="review-date">{{ review.createdAt }}</div>
-                    </div>
-                  {% endfor %}
-                {% else %}
-                  <div class="no-reviews">
-                    <span class="no-reviews-icon">📝</span>
-                    <p>No reviews yet. Be the first to share your experience!</p>
-                  </div>
-                {% endif %}
-              </div>
-
-              <!-- Write Review Form -->
-              <div class="write-review-section">
-                <h4 class="write-review-title">Write a Review</h4>
-                <form class="review-form" onsubmit="submitReview(event, {{ hall.id }}, {{ forloop.counter }})">
-                  {% csrf_token %}
-                  
-                  <div class="rating-input">
-                    <label>Your Rating</label>
-                    <div class="star-rating" id="star-rating-{{ forloop.counter }}">
-                      {% for i in "54321" %}
-                        <input type="radio" name="rating" value="{{ i }}" id="star{{ i }}-{{ forloop.parentloop.counter }}" {% if i == "5" %}checked{% endif %}>
-                        <label for="star{{ i }}-{{ forloop.parentloop.counter }}">★</label>
-                      {% endfor %}
-                    </div>
-                  </div>
-
-                  <div class="form-group">
-                    <label for="reviewText-{{ forloop.counter }}">Your Review</label>
-                    <textarea 
-                      id="reviewText-{{ forloop.counter }}" 
-                      name="reviewText" 
-                      placeholder="Share your dining experience..."
-                      rows="3"
-                      required
-                    ></textarea>
-                  </div>
-
-                  <div class="form-group">
-                    <label>Food Preferences (select what you enjoyed)</label>
-                    <div class="preferences-grid">
-                      {% for value, label in food_preference_choices %}
-                        <label class="pref-checkbox">
-                          <input type="checkbox" name="foodPreferences" value="{{ value }}">
-                          <span class="pref-label">{{ label }}</span>
-                        </label>
-                      {% endfor %}
-                    </div>
-                  </div>
-
-                  <button type="submit" class="submit-review-btn">
-                    <span class="btn-text">Submit Review</span>
-                    <span class="btn-loading" style="display:none;">Submitting...</span>
-                  </button>
-                </form>
-              </div>
-            </div>
           </div>
         </div>
+
+        <!-- Menu Items Preview -->
+        <div class="menu-items" id="menu-preview-{{ hall.id }}">
+          <!-- Items will be populated by JavaScript based on selected meal -->
+        </div>
+
+        <!-- Expanded Menu Panel -->
+        <div class="menu-panel" id="menu-panel-{{ hall.id }}">
+          <div class="menu-section-title">Full Menu</div>
+          <div class="menu-list" id="menu-full-{{ hall.id }}">
+            <!-- Full menu items -->
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty-state">
+    <p>No dining halls available</p>
+  </div>
+{% endif %}
+
+<!-- Dish Info Card Popup -->
+<div class="dish-info-overlay" id="dishInfoOverlay" onclick="closeDishInfo()">
+  <div class="dish-info-card" onclick="event.stopPropagation()">
+    <button class="dish-info-close" onclick="closeDishInfo()">x</button>
+    <h3 class="dish-info-title" id="dishInfoTitle">Dish Name</h3>
+    <div class="dish-info-calories" id="dishInfoCalories">
+      <span>0 kcal</span>
+    </div>
+    <div class="dish-info-section" id="dishInfoAllergens">
+      <div class="dish-info-label">Allergens</div>
+      <div class="dish-info-tags" id="dishInfoAllergenTags"></div>
+    </div>
+    <div class="dish-info-section" id="dishInfoDiet">
+      <div class="dish-info-label">Diet Categories</div>
+      <div class="dish-info-tags" id="dishInfoDietTags"></div>
+    </div>
+    <div class="dish-info-section" id="dishInfoIngredientsSection">
+      <div class="dish-info-label">Ingredients</div>
+      <div class="dish-info-ingredients" id="dishInfoIngredients"></div>
+    </div>
+    <button class="dish-info-add" id="dishInfoAddBtn" onclick="addDishToSelection()">
+      Add to Today's Selection
+    </button>
+  </div>
+</div>
+
+<!-- Reviews Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeReviewsModal()"></div>
+<div class="modal reviews-modal" id="reviewsModal">
+  <div class="modal-header">
+    <h3 class="modal-title">Reviews</h3>
+    <button class="modal-close" onclick="closeReviewsModal()">×</button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="currentHallId" value="">
+    
+    <!-- Reviews List -->
+    <div class="reviews-list" id="reviewsList">
+      <!-- Reviews will be populated by JavaScript -->
+    </div>
+    
+    <!-- Write Review Section (collapsed by default) -->
+    <div class="write-review-section" id="writeReviewSection">
+      <button class="write-review-toggle" id="writeReviewToggle" onclick="toggleWriteReview()">
+        <span>Write a Review</span>
+        <span class="toggle-icon">+</span>
+      </button>
+      <form class="write-review-form" id="writeReviewForm" onsubmit="submitReview(event)">
+        {% csrf_token %}
+        <div class="form-group">
+          <label>Your Rating</label>
+          <div class="star-rating" id="starRating">
+            <span class="star" data-rating="1">★</span>
+            <span class="star" data-rating="2">★</span>
+            <span class="star" data-rating="3">★</span>
+            <span class="star" data-rating="4">★</span>
+            <span class="star" data-rating="5">★</span>
+          </div>
+          <input type="hidden" id="ratingInput" name="rating" value="5">
+        </div>
+        <div class="form-group">
+          <textarea id="reviewText" name="reviewText" placeholder="Share your dining experience..." rows="3" required></textarea>
+        </div>
+        <button type="submit" class="btn-primary btn-full">Submit Review</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Modal Styles */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 500;
+  }
+
+  .modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    width: 90%;
+    max-width: 480px;
+    max-height: 80vh;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 510;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+  }
+
+  .modal-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0;
+  }
+
+  .modal-close {
+    width: 28px;
+    height: 28px;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    color: #64748b;
+    cursor: pointer;
+  }
+
+  .modal-close:hover {
+    background: #e2e8f0;
+  }
+
+  .modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  /* Reviews List */
+  .reviews-list {
+    margin-bottom: 16px;
+  }
+
+  .review-item {
+    padding: 14px;
+    background: #f8fafc;
+    border-radius: 10px;
+    margin-bottom: 10px;
+  }
+
+  .review-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .review-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .review-avatar {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .review-username {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  .review-date {
+    font-size: 11px;
+    color: #94a3b8;
+  }
+
+  .review-rating {
+    color: #fbbf24;
+    font-size: 12px;
+  }
+
+  .review-text {
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.5;
+  }
+
+  .no-reviews {
+    text-align: center;
+    padding: 30px 20px;
+    color: #94a3b8;
+    font-size: 13px;
+  }
+
+  /* Write Review Section */
+  .write-review-section {
+    border-top: 1px solid #e2e8f0;
+    padding-top: 16px;
+  }
+
+  .write-review-toggle {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 8px;
+    color: #6366f1;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .write-review-toggle:hover {
+    background: #e0e7ff;
+  }
+
+  .write-review-toggle .toggle-icon {
+    font-size: 16px;
+    transition: transform 0.2s ease;
+  }
+
+  .write-review-toggle.active .toggle-icon {
+    transform: rotate(45deg);
+  }
+
+  .write-review-form {
+    display: none;
+    margin-top: 12px;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 10px;
+  }
+
+  .write-review-form.active {
+    display: block;
+  }
+
+  .form-group {
+    margin-bottom: 12px;
+  }
+
+  .form-group:last-of-type {
+    margin-bottom: 0;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+  }
+
+  .star-rating {
+    display: flex;
+    gap: 4px;
+  }
+
+  .star-rating .star {
+    font-size: 22px;
+    color: #e2e8f0;
+    cursor: pointer;
+    transition: color 0.15s ease;
+  }
+
+  .star-rating .star:hover,
+  .star-rating .star.active {
+    color: #fbbf24;
+  }
+
+  .form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 70px;
+  }
+
+  .form-group textarea:focus {
+    outline: none;
+    border-color: #6366f1;
+  }
+
+  .btn-primary {
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    background: #6366f1;
+    border: none;
+    color: #fff;
+  }
+
+  .btn-primary:hover {
+    background: #4f46e5;
+  }
+
+  .btn-full {
+    width: 100%;
+    margin-top: 12px;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 12px 20px;
+    background: #22c55e;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 600;
+  }
+
+  .toast.error {
+    background: #ef4444;
+  }
+
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+</style>
+
+<script>
+  // Dining halls data from Django
+  const diningHalls = [
+    {% for hall in dining_halls %}
+    {
+      id: {{ hall.id }},
+      name: "{{ hall.hallName }}",
+      meals: {
+        breakfast: [{% for item in hall.meals.breakfast %}"{% if item.name %}{{ item.name }}{% else %}{{ item }}{% endif %}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        lunch: [{% for item in hall.meals.lunch %}"{% if item.name %}{{ item.name }}{% else %}{{ item }}{% endif %}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        dinner: [{% for item in hall.meals.dinner %}"{% if item.name %}{{ item.name }}{% else %}{{ item }}{% endif %}"{% if not forloop.last %}, {% endif %}{% endfor %}]
+      }
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  // Menu data by date from Django (with full item details)
+  const menusByDate = {
+    {% for hall_name, dates in menus_by_date.items %}
+    "{{ hall_name }}": [
+      {% for date_data in dates %}
+      {
+        date: "{{ date_data.date }}",
+        dateDisplay: "{{ date_data.dateDisplay }}",
+        dayOfWeek: "{{ date_data.dayOfWeek }}",
+        isWeekend: {% if date_data.isWeekend %}true{% else %}false{% endif %},
+        meals: {
+          breakfast: [{% for item in date_data.meals.breakfast %}{% if item.name %}{name: "{{ item.name|escapejs }}", calories: {{ item.calories|default:0 }}, allergens: [{% for a in item.allergens %}"{{ a }}"{% if not forloop.last %},{% endif %}{% endfor %}], dietCategories: [{% for d in item.dietCategories %}"{{ d }}"{% if not forloop.last %},{% endif %}{% endfor %}], ingredients: "{{ item.ingredients|escapejs|default:'' }}"}{% else %}{name: "{{ item|escapejs }}", calories: 0, allergens: [], dietCategories: [], ingredients: ""}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}],
+          lunch: [{% for item in date_data.meals.lunch %}{% if item.name %}{name: "{{ item.name|escapejs }}", calories: {{ item.calories|default:0 }}, allergens: [{% for a in item.allergens %}"{{ a }}"{% if not forloop.last %},{% endif %}{% endfor %}], dietCategories: [{% for d in item.dietCategories %}"{{ d }}"{% if not forloop.last %},{% endif %}{% endfor %}], ingredients: "{{ item.ingredients|escapejs|default:'' }}"}{% else %}{name: "{{ item|escapejs }}", calories: 0, allergens: [], dietCategories: [], ingredients: ""}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}],
+          dinner: [{% for item in date_data.meals.dinner %}{% if item.name %}{name: "{{ item.name|escapejs }}", calories: {{ item.calories|default:0 }}, allergens: [{% for a in item.allergens %}"{{ a }}"{% if not forloop.last %},{% endif %}{% endfor %}], dietCategories: [{% for d in item.dietCategories %}"{{ d }}"{% if not forloop.last %},{% endif %}{% endfor %}], ingredients: "{{ item.ingredients|escapejs|default:'' }}"}{% else %}{name: "{{ item|escapejs }}", calories: 0, allergens: [], dietCategories: [], ingredients: ""}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}]
+        }
+      }{% if not forloop.last %},{% endif %}
       {% endfor %}
-    </div>
-  {% else %}
-    <div class="empty-state">
-      <h3>📋 No Menu Data Available</h3>
-      <p>We're having trouble loading the dining hall information. Please try again later.</p>
-    </div>
-  {% endif %}
-
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
-
-    .menu-header {
-      text-align: center;
-      margin-bottom: 2.5rem;
-    }
-
-    .menu-header h1 {
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700;
-      font-size: 2.25rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 0.5rem;
-    }
-
-    .menu-header p {
-      color: #64748b;
-      font-size: 1.05rem;
-    }
-
-    .dining-halls {
-      display: grid;
-      gap: 1.75rem;
-      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-    }
-
-    .hall-card {
-      background: linear-gradient(145deg, #ffffff 0%, #fafbff 100%);
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.08), 0 1px 3px rgba(0,0,0,0.05);
-      padding: 1.75rem;
-      border: 1px solid rgba(102, 126, 234, 0.12);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .hall-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15), 0 2px 6px rgba(0,0,0,0.06);
-    }
-
-    .hall-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 1rem;
-      gap: 1rem;
-    }
-
-    .hall-name {
-      font-family: 'DM Sans', sans-serif;
-      color: #1e293b;
-      margin: 0;
-      font-size: 1.5rem;
-      font-weight: 700;
-    }
-
-    .hall-meta {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      flex-shrink: 0;
-    }
-
-    .hall-rating {
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-      padding: 0.4rem 0.75rem;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 0.875rem;
-      color: #92400e;
-    }
-
-    .hall-rating .star-icon {
-      color: #f59e0b;
-    }
-
-    .hall-rating .review-count {
-      color: #a16207;
-      font-weight: 500;
-    }
-
-    .status-badge {
-      padding: 0.4rem 0.85rem;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 0.8rem;
-      letter-spacing: 0.02em;
-    }
-
-    .status-badge.open {
-      background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-      color: #166534;
-    }
-
-    .status-badge.closed {
-      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-      color: #991b1b;
-    }
-
-    .hall-hours {
-      color: #64748b;
-      margin-bottom: 1.5rem;
-      font-size: 0.95rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .meals-container {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .meal-section {
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      overflow: hidden;
-      background: #fff;
-    }
-
-    .meal-toggle {
-      width: 100%;
-      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-      border: none;
-      padding: 1rem 1.25rem;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 1rem;
-      font-weight: 600;
-      color: #334155;
-      transition: all 0.2s;
-    }
-
-    .meal-toggle:hover {
-      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-    }
-
-    .meal-header {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.35rem;
-    }
-
-    .meal-title {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 1rem;
-      font-weight: 600;
-    }
-
-    .meal-hours {
-      font-size: 0.8rem;
-      color: #64748b;
-      font-weight: 500;
-      background: #e2e8f0;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-    }
-
-    .toggle-icon, .toggle-arrow {
-      transition: transform 0.3s ease;
-      color: #94a3b8;
-    }
-
-    .meal-toggle.active .toggle-icon {
-      transform: rotate(180deg);
-    }
-
-    .meal-content {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.3s ease-out;
-    }
-
-    .meal-content.expanded {
-      max-height: 500px;
-    }
-
-    .meal-items {
-      padding: 1rem 1.25rem;
-      margin: 0;
-      background: #fff;
-      list-style: none;
-    }
-
-    .meal-items li {
-      padding: 0.6rem 0;
-      border-bottom: 1px solid #f1f5f9;
-      color: #475569;
-      font-size: 0.95rem;
-    }
-
-    .meal-items li:last-child {
-      border-bottom: none;
-    }
-
-    /* Reviews Section Styles */
-    .reviews-section {
-      margin-top: 1.25rem;
-      border-top: 1px solid #e2e8f0;
-      padding-top: 1.25rem;
-    }
-
-    .review-toggle-btn {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      padding: 0.875rem 1.25rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border: none;
-      border-radius: 10px;
-      color: #fff;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.25s ease;
-      box-shadow: 0 4px 14px rgba(102, 126, 234, 0.35);
-    }
-
-    .review-toggle-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.45);
-    }
-
-    .review-toggle-btn .review-btn-icon {
-      font-size: 1.1rem;
-    }
-
-    .review-toggle-btn .review-badge {
-      background: rgba(255,255,255,0.25);
-      padding: 0.15rem 0.5rem;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      margin-left: 0.25rem;
-    }
-
-    .review-toggle-btn .toggle-arrow {
-      margin-left: auto;
-      color: rgba(255,255,255,0.8);
-    }
-
-    .review-toggle-btn.active .toggle-arrow {
-      transform: rotate(180deg);
-    }
-
-    .reviews-panel {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.4s ease-out;
-    }
-
-    .reviews-panel.expanded {
-      max-height: 2000px;
-    }
-
-    .reviews-list {
-      margin-top: 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .review-card {
-      background: #fff;
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 1.25rem;
-      transition: box-shadow 0.2s;
-    }
-
-    .review-card:hover {
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-    }
-
-    .review-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.75rem;
-    }
-
-    .review-user {
-      display: flex;
-      align-items: center;
-      gap: 0.65rem;
-    }
-
-    .user-avatar {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-weight: 700;
-      font-size: 0.9rem;
-    }
-
-    .user-name {
-      font-weight: 600;
-      color: #1e293b;
-      font-size: 0.95rem;
-    }
-
-    .review-rating {
-      display: flex;
-      gap: 2px;
-    }
-
-    .review-rating .star {
-      color: #cbd5e1;
-      font-size: 1rem;
-    }
-
-    .review-rating .star.filled {
-      color: #f59e0b;
-    }
-
-    .review-text {
-      color: #475569;
-      line-height: 1.6;
-      margin: 0 0 0.75rem 0;
-      font-size: 0.95rem;
-    }
-
-    .review-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .pref-tag {
-      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-      color: #047857;
-      padding: 0.25rem 0.65rem;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 500;
-      text-transform: capitalize;
-    }
-
-    .review-date {
-      color: #94a3b8;
-      font-size: 0.8rem;
-    }
-
-    .no-reviews {
-      text-align: center;
-      padding: 2rem;
-      color: #64748b;
-    }
-
-    .no-reviews-icon {
-      font-size: 2.5rem;
-      display: block;
-      margin-bottom: 0.75rem;
-    }
-
-    /* Write Review Form */
-    .write-review-section {
-      margin-top: 1.5rem;
-      padding-top: 1.5rem;
-      border-top: 1px dashed #e2e8f0;
-    }
-
-    .write-review-title {
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700;
-      color: #1e293b;
-      margin: 0 0 1.25rem 0;
-      font-size: 1.1rem;
-    }
-
-    .review-form {
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-    }
-
-    .rating-input {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .rating-input label {
-      font-weight: 600;
-      color: #334155;
-      font-size: 0.9rem;
-    }
-
-    .star-rating {
-      display: flex;
-      flex-direction: row-reverse;
-      justify-content: flex-end;
-      gap: 0.25rem;
-    }
-
-    .star-rating input {
-      display: none;
-    }
-
-    .star-rating label {
-      cursor: pointer;
-      font-size: 1.75rem;
-      color: #cbd5e1;
-      transition: color 0.15s;
-    }
-
-    .star-rating input:checked ~ label,
-    .star-rating label:hover,
-    .star-rating label:hover ~ label {
-      color: #f59e0b;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .form-group label {
-      font-weight: 600;
-      color: #334155;
-      font-size: 0.9rem;
-    }
-
-    .form-group textarea {
-      padding: 0.875rem 1rem;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 10px;
-      font-size: 0.95rem;
-      font-family: inherit;
-      resize: vertical;
-      min-height: 90px;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .form-group textarea:focus {
-      outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
-    }
-
-    .form-group textarea::placeholder {
-      color: #94a3b8;
-    }
-
-    .preferences-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 0.5rem;
-    }
-
-    .pref-checkbox {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.6rem 0.85rem;
-      background: #f8fafc;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-size: 0.85rem;
-    }
-
-    .pref-checkbox:hover {
-      background: #f1f5f9;
-      border-color: #cbd5e1;
-    }
-
-    .pref-checkbox input {
-      display: none;
-    }
-
-    .pref-checkbox input:checked + .pref-label {
-      color: #667eea;
-      font-weight: 600;
-    }
-
-    .pref-checkbox:has(input:checked) {
-      background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
-      border-color: #667eea;
-    }
-
-    .pref-label {
-      color: #475569;
-      font-weight: 500;
-    }
-
-    .submit-review-btn {
-      padding: 0.9rem 1.5rem;
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      border: none;
-      border-radius: 10px;
-      color: #fff;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.25s;
-      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
-    }
-
-    .submit-review-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
-    }
-
-    .submit-review-btn:disabled {
-      opacity: 0.7;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .error-message, .empty-state {
-      text-align: center;
-      padding: 2rem;
-      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-      border: 1px solid #fecaca;
-      border-radius: 12px;
-      color: #991b1b;
-    }
-
-    .empty-state {
-      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-      border-color: #bae6fd;
-      color: #0369a1;
-    }
-
-    /* Success Toast */
-    .toast {
-      position: fixed;
-      bottom: 2rem;
-      right: 2rem;
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: #fff;
-      padding: 1rem 1.5rem;
-      border-radius: 10px;
-      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
-      font-weight: 600;
-      z-index: 1000;
-      transform: translateY(100px);
-      opacity: 0;
-      transition: all 0.3s ease;
-    }
-
-    .toast.show {
-      transform: translateY(0);
-      opacity: 1;
-    }
-
-    @media (max-width: 768px) {
-      .dining-halls {
-        grid-template-columns: 1fr;
+    ]{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  };
+
+  // Available dates from backend
+  const availableDates = [
+    {% for date_info in available_dates %}
+    {
+      date: "{{ date_info.date }}",
+      dateDisplay: "{{ date_info.dateDisplay }}",
+      dayOfWeek: "{{ date_info.dayOfWeek }}",
+      isWeekend: {% if date_info.isWeekend %}true{% else %}false{% endif %}
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  let currentMeal = 'breakfast';
+  let currentRating = 5;
+  let selectedDateStr = availableDates.length > 0 ? availableDates[0].date : '';
+  let selectedDateIsWeekend = availableDates.length > 0 ? availableDates[0].isWeekend : false;
+  const isWeekend = {% if is_weekend %}true{% else %}false{% endif %};
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', function() {
+    generateDateSelector();
+    initStarRating();
+    updateWeekendState();
+    updateMenuPreviews();
+    
+    // Set active meal based on time (considering weekend)
+    const hour = new Date().getHours();
+    if (hour >= 15) {
+      switchMeal('dinner');
+    } else if (hour >= 10 || selectedDateIsWeekend) {
+      switchMeal('lunch');
+    } else {
+      switchMeal('breakfast');
+    }
+  });
+
+  // Update weekend state based on selected date
+  function updateWeekendState() {
+    const breakfastTab = document.getElementById('breakfastMealTab');
+    const weekendNotice = document.getElementById('weekendNoticeMenu');
+    
+    if (selectedDateIsWeekend) {
+      // Disable breakfast tab
+      if (breakfastTab) {
+        breakfastTab.classList.add('disabled');
+        breakfastTab.title = 'No breakfast on weekends';
+      }
+      // Show weekend notice
+      if (weekendNotice) {
+        weekendNotice.style.display = 'flex';
+      }
+      // If current meal is breakfast, switch to lunch
+      if (currentMeal === 'breakfast') {
+        switchMeal('lunch');
+      }
+    } else {
+      // Enable breakfast tab
+      if (breakfastTab) {
+        breakfastTab.classList.remove('disabled');
+        breakfastTab.title = '';
+      }
+      // Hide weekend notice
+      if (weekendNotice) {
+        weekendNotice.style.display = 'none';
+      }
+    }
+  }
+
+  // Generate date selector from available dates
+  function generateDateSelector() {
+    const container = document.getElementById('dateSelector');
+    container.innerHTML = '';
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    availableDates.forEach((dateInfo, index) => {
+      const isToday = dateInfo.date === today;
+      const isActive = dateInfo.date === selectedDateStr;
+      
+      const item = document.createElement('div');
+      item.className = `date-item${isToday ? ' today' : ''}${isActive ? ' active' : ''}${dateInfo.isWeekend ? ' weekend' : ''}`;
+      item.dataset.date = dateInfo.date;
+      item.dataset.isWeekend = dateInfo.isWeekend;
+      item.onclick = () => selectDate(dateInfo, item);
+      
+      // Extract day number from date
+      const dayNum = dateInfo.date.split('-')[2];
+      const displayDay = isToday ? 'Today' : dateInfo.dayOfWeek.slice(0, 3);
+      
+      item.innerHTML = `
+        <span class="date-day">${displayDay}</span>
+        <span class="date-num">${parseInt(dayNum)}</span>
+        ${dateInfo.isWeekend ? '<span class="weekend-dot"></span>' : ''}
+      `;
+      
+      container.appendChild(item);
+    });
+  }
+
+  function selectDate(dateInfo, element) {
+    selectedDateStr = dateInfo.date;
+    selectedDateIsWeekend = dateInfo.isWeekend;
+    
+    document.querySelectorAll('.date-item').forEach(el => el.classList.remove('active'));
+    element.classList.add('active');
+    
+    // Update weekend state for new date
+    updateWeekendState();
+    updateMenuPreviews();
+  }
+
+  // Switch meal type
+  function switchMeal(meal) {
+    // Prevent switching to breakfast on weekends
+    if (meal === 'breakfast' && selectedDateIsWeekend) {
+      return;
+    }
+    
+    currentMeal = meal;
+    document.querySelectorAll('.meal-tab').forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.meal === meal);
+    });
+    updateMenuPreviews();
+  }
+
+  // Get menu items for a specific hall and date
+  function getMenuForDate(hallName, dateStr, mealType) {
+    const hallDates = menusByDate[hallName] || [];
+    const dateData = hallDates.find(d => d.date === dateStr);
+    
+    if (dateData && dateData.meals) {
+      return dateData.meals[mealType] || [];
+    }
+    
+    // Fallback to default meals if no date-specific data
+    const hall = diningHalls.find(h => h.name === hallName);
+    return hall ? (hall.meals[mealType] || []) : [];
+  }
+
+  // Store current dish for add to selection
+  let currentDishInfo = null;
+  let currentDishHall = null;
+
+  // Update menu previews for all halls based on selected date
+  function updateMenuPreviews() {
+    diningHalls.forEach(hall => {
+      const preview = document.getElementById(`menu-preview-${hall.id}`);
+      const items = getMenuForDate(hall.name, selectedDateStr, currentMeal);
+      const displayItems = items.slice(0, 4);
+      const remaining = items.length - 4;
+      
+      let html = displayItems.map((item, idx) => {
+        const name = typeof item === 'object' ? item.name : item;
+        const dataAttr = typeof item === 'object' ? `data-item='${JSON.stringify(item).replace(/'/g, "&#39;")}'` : '';
+        return `<span class="menu-item clickable" ${dataAttr} data-hall="${hall.name}" onclick="showDishInfo(this)">${name}</span>`;
+      }).join('');
+      
+      if (remaining > 0) {
+        html += `<span class="menu-item more" onclick="toggleMenuPanel(${hall.id})">+${remaining} more</span>`;
       }
       
-      .hall-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.75rem;
-      }
-
-      .hall-meta {
-        width: 100%;
-        justify-content: space-between;
-      }
-
-      .preferences-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-  </style>
-
-  <script>
-    function toggleMeal(mealId) {
-      const content = document.getElementById(mealId);
-      const button = content.previousElementSibling;
-      
-      if (content.classList.contains('expanded')) {
-        content.classList.remove('expanded');
-        button.classList.remove('active');
-      } else {
-        content.classList.add('expanded');
-        button.classList.add('active');
-      }
-    }
-
-    function toggleReviews(reviewsId) {
-      const panel = document.getElementById(reviewsId);
-      const button = panel.previousElementSibling;
-      
-      if (panel.classList.contains('expanded')) {
-        panel.classList.remove('expanded');
-        button.classList.remove('active');
-      } else {
-        panel.classList.add('expanded');
-        button.classList.add('active');
-      }
-    }
-
-    function showToast(message, isError = false) {
-      const existingToast = document.querySelector('.toast');
-      if (existingToast) existingToast.remove();
-
-      const toast = document.createElement('div');
-      toast.className = 'toast';
-      toast.textContent = message;
-      if (isError) {
-        toast.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
-      }
-      document.body.appendChild(toast);
-
-      setTimeout(() => toast.classList.add('show'), 10);
-      setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
-      }, 3000);
-    }
-
-    function submitReview(event, hallId, loopIndex) {
-      event.preventDefault();
-      
-      const form = event.target;
-      const submitBtn = form.querySelector('.submit-review-btn');
-      const btnText = submitBtn.querySelector('.btn-text');
-      const btnLoading = submitBtn.querySelector('.btn-loading');
-      
-      btnText.style.display = 'none';
-      btnLoading.style.display = 'inline';
-      submitBtn.disabled = true;
-
-      const formData = new FormData(form);
-      
-      fetch(`/menus/api/review/${hallId}/`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          const reviewsList = document.getElementById(`reviews-list-${hallId}`);
-          const noReviews = reviewsList.querySelector('.no-reviews');
-          if (noReviews) noReviews.remove();
-
-          const review = data.review;
-          const reviewHtml = `
-            <div class="review-card" style="animation: fadeIn 0.3s ease">
-              <div class="review-header">
-                <div class="review-user">
-                  <span class="user-avatar">${review.username.charAt(0).toUpperCase()}</span>
-                  <span class="user-name">${review.username}</span>
-                </div>
-                <div class="review-rating">
-                  ${'<span class="star filled">★</span>'.repeat(review.rating)}
-                  ${'<span class="star">☆</span>'.repeat(5 - review.rating)}
-                </div>
-              </div>
-              <p class="review-text">${review.reviewText}</p>
-              ${review.foodPreferences.length ? `
-                <div class="review-tags">
-                  ${review.foodPreferences.map(pref => `<span class="pref-tag">${pref}</span>`).join('')}
-                </div>
-              ` : ''}
-              <div class="review-date">${review.createdAt}</div>
-            </div>
-          `;
-          reviewsList.insertAdjacentHTML('afterbegin', reviewHtml);
-
-          const hallCard = form.closest('.hall-card');
-          const reviewBadge = hallCard.querySelector('.review-badge');
-          const currentCount = parseInt(reviewBadge.textContent);
-          reviewBadge.textContent = currentCount + 1;
-
-          form.reset();
-          form.querySelector('input[name="rating"][value="5"]').checked = true;
-
-          showToast('✓ Review submitted successfully!');
+      if (items.length === 0) {
+        if (currentMeal === 'breakfast' && selectedDateIsWeekend) {
+          html = '<span class="menu-item no-items">No breakfast on weekends</span>';
         } else {
-          showToast('Error: ' + (data.error || 'Failed to submit review'), true);
+          html = '<span class="menu-item no-items">No items available</span>';
         }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        showToast('Error submitting review. Please try again.', true);
-      })
-      .finally(() => {
-        btnText.style.display = 'inline';
-        btnLoading.style.display = 'none';
-        submitBtn.disabled = false;
+      }
+      
+      preview.innerHTML = html;
+      
+      // Update full menu panel
+      const fullMenu = document.getElementById(`menu-full-${hall.id}`);
+      if (fullMenu) {
+        fullMenu.innerHTML = items.map((item, idx) => {
+          const name = typeof item === 'object' ? item.name : item;
+          const dataAttr = typeof item === 'object' ? `data-item='${JSON.stringify(item).replace(/'/g, "&#39;")}'` : '';
+          return `<span class="menu-item clickable" ${dataAttr} data-hall="${hall.name}" onclick="showDishInfo(this)">${name}</span>`;
+        }).join('');
+      }
+    });
+  }
+
+  // Show dish info popup
+  function showDishInfo(element) {
+    const itemData = element.dataset.item;
+    const hallName = element.dataset.hall;
+    
+    let dish;
+    if (itemData) {
+      try {
+        dish = JSON.parse(itemData);
+      } catch (e) {
+        dish = { name: element.textContent, calories: 0, allergens: [], dietCategories: [], ingredients: '' };
+      }
+    } else {
+      dish = { name: element.textContent, calories: 0, allergens: [], dietCategories: [], ingredients: '' };
+    }
+    
+    currentDishInfo = dish;
+    currentDishHall = hallName;
+    
+    // Update popup content
+    document.getElementById('dishInfoTitle').textContent = dish.name;
+    document.getElementById('dishInfoCalories').innerHTML = `<span>${dish.calories || 0} kcal</span>`;
+    
+    // Allergens
+    const allergenSection = document.getElementById('dishInfoAllergens');
+    const allergenTags = document.getElementById('dishInfoAllergenTags');
+    if (dish.allergens && dish.allergens.length > 0) {
+      allergenSection.style.display = 'block';
+      allergenTags.innerHTML = dish.allergens.map(a => 
+        `<span class="dish-tag allergen">${a.charAt(0).toUpperCase() + a.slice(1)}</span>`
+      ).join('');
+    } else {
+      allergenSection.style.display = 'none';
+    }
+    
+    // Diet categories
+    const dietSection = document.getElementById('dishInfoDiet');
+    const dietTags = document.getElementById('dishInfoDietTags');
+    if (dish.dietCategories && dish.dietCategories.length > 0) {
+      dietSection.style.display = 'block';
+      dietTags.innerHTML = dish.dietCategories.map(d => 
+        `<span class="dish-tag diet">${d.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>`
+      ).join('');
+    } else {
+      dietSection.style.display = 'none';
+    }
+    
+    // Ingredients
+    const ingredientsSection = document.getElementById('dishInfoIngredientsSection');
+    const ingredientsEl = document.getElementById('dishInfoIngredients');
+    if (dish.ingredients && dish.ingredients.trim()) {
+      ingredientsSection.style.display = 'block';
+      ingredientsEl.textContent = dish.ingredients;
+    } else {
+      ingredientsSection.style.display = 'none';
+    }
+    
+    // Show popup
+    document.getElementById('dishInfoOverlay').classList.add('show');
+  }
+  
+  function closeDishInfo() {
+    document.getElementById('dishInfoOverlay').classList.remove('show');
+    currentDishInfo = null;
+    currentDishHall = null;
+  }
+  
+  function addDishToSelection() {
+    if (!currentDishInfo || !currentDishHall) return;
+    
+    if (typeof SelectionManager !== 'undefined') {
+      const success = SelectionManager.addItem({
+        name: currentDishInfo.name,
+        calories: currentDishInfo.calories || 0,
+        hall: currentDishHall,
+        mealType: currentMeal,
+        color: '#6366f1'
+      });
+      
+      if (success) {
+        showToast(`Added ${currentDishInfo.name} to selection`);
+        closeDishInfo();
+      }
+    } else {
+      showToast('Selection manager not available', true);
+    }
+  }
+
+  function toggleMenuPanel(hallId) {
+    const panel = document.getElementById(`menu-panel-${hallId}`);
+    panel.classList.toggle('active');
+  }
+
+  // Star Rating
+  function initStarRating() {
+    const stars = document.querySelectorAll('.star-rating .star');
+    stars.forEach(star => {
+      star.addEventListener('click', function() {
+        currentRating = parseInt(this.dataset.rating);
+        document.getElementById('ratingInput').value = currentRating;
+        updateStarDisplay(currentRating);
+      });
+      star.addEventListener('mouseenter', function() {
+        updateStarDisplay(parseInt(this.dataset.rating));
+      });
+    });
+    
+    const starRating = document.getElementById('starRating');
+    if (starRating) {
+      starRating.addEventListener('mouseleave', function() {
+        updateStarDisplay(currentRating);
       });
     }
-  </script>
+    
+    updateStarDisplay(5);
+  }
 
-  <style>
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
+  function updateStarDisplay(rating) {
+    const stars = document.querySelectorAll('.star-rating .star');
+    stars.forEach(star => {
+      const r = parseInt(star.dataset.rating);
+      star.classList.toggle('active', r <= rating);
+    });
+  }
+
+  // Reviews Modal
+  let currentReviews = [];
+
+  function openReviewsModal(hallId) {
+    const hallData = hallReviewsData[hallId];
+    if (!hallData) {
+      console.error('Hall not found:', hallId);
+      return;
     }
-  </style>
-{% endblock %}
+    
+    const hallName = hallData.hallName;
+    const reviews = hallData.reviews || [];
+    
+    document.getElementById('currentHallId').value = hallId;
+    document.querySelector('.modal-title').textContent = `${hallName} Reviews`;
+    currentReviews = reviews;
+    
+    // Render reviews list
+    const reviewsList = document.getElementById('reviewsList');
+    if (currentReviews.length === 0) {
+      reviewsList.innerHTML = '<div class="no-reviews">No reviews yet. Be the first to review!</div>';
+    } else {
+      reviewsList.innerHTML = currentReviews.map(review => `
+        <div class="review-item">
+          <div class="review-header">
+            <div class="review-user">
+              <div class="review-avatar">${review.username.charAt(0).toUpperCase()}</div>
+              <div>
+                <div class="review-username">${review.username}</div>
+                <div class="review-date">${review.createdAt}</div>
+              </div>
+            </div>
+            <div class="review-rating">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</div>
+          </div>
+          <div class="review-text">${review.reviewText}</div>
+        </div>
+      `).join('');
+    }
+    
+    // Reset write review form
+    document.getElementById('writeReviewToggle').classList.remove('active');
+    document.getElementById('writeReviewForm').classList.remove('active');
+    document.getElementById('writeReviewForm').reset();
+    currentRating = 5;
+    updateStarDisplay(5);
+    
+    document.getElementById('modalOverlay').classList.add('active');
+    document.getElementById('reviewsModal').classList.add('active');
+  }
 
+  function closeReviewsModal() {
+    document.getElementById('modalOverlay').classList.remove('active');
+    document.getElementById('reviewsModal').classList.remove('active');
+  }
+
+  function toggleWriteReview() {
+    const toggle = document.getElementById('writeReviewToggle');
+    const form = document.getElementById('writeReviewForm');
+    toggle.classList.toggle('active');
+    form.classList.toggle('active');
+  }
+
+  function submitReview(event) {
+    event.preventDefault();
+    const hallId = document.getElementById('currentHallId').value;
+    const formData = new FormData(event.target);
+    
+    fetch(`/menus/review/${hallId}/`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showToast('Review submitted successfully!');
+        closeReviewsModal();
+        // Reload page to see updated reviews
+        setTimeout(() => location.reload(), 500);
+      } else {
+        showToast(data.error || 'Failed to submit review', true);
+      }
+    })
+    .catch(() => {
+      showToast('Error submitting review', true);
+    });
+  }
+
+  function showToast(message, isError = false) {
+    const existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'toast' + (isError ? ' error' : '');
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+</script>
+
+{% endblock %}

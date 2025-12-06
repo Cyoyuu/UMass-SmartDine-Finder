@@ -1,0 +1,213 @@
+{
+  "scrapedAt": "2025-12-06T12:00:00",
+  "dateRange": {
+    "start": "2025-12-06",
+    "end": "2025-12-13"
+  },
+  "diningHalls": [
+    {
+      "id": 1,
+      "hallName": "Worcester",
+      "hours": "07:00-23:00",
+      "mealHours": {
+        "breakfast": "07:00-10:30",
+        "lunch": "11:00-14:30",
+        "dinner": "17:00-21:00"
+      },
+      "meals": {
+        "breakfast": [
+          {"name": "Scrambled Eggs", "calories": 180, "weeklySelections": 456, "dietCategories": ["local"], "ingredients": "Farm eggs, butter, chives", "allergens": ["eggs", "dairy"]},
+          {"name": "Hard Boiled Egg", "calories": 78, "weeklySelections": 312, "dietCategories": ["local", "vegetarian"], "ingredients": "Fresh eggs", "allergens": ["eggs"]},
+          {"name": "Hot Oatmeal", "calories": 150, "weeklySelections": 389, "dietCategories": ["whole_grain", "vegetarian", "plant_based"], "ingredients": "Steel-cut oats, brown sugar, cinnamon", "allergens": ["gluten"]},
+          {"name": "French Toast Sticks", "calories": 280, "weeklySelections": 278, "dietCategories": ["vegetarian"], "ingredients": "Bread, eggs, cinnamon, maple syrup", "allergens": ["gluten", "dairy", "eggs"]},
+          {"name": "Pork Sausage Links", "calories": 220, "weeklySelections": 234, "dietCategories": ["local"], "ingredients": "Pork, spices, sage", "allergens": []},
+          {"name": "Chicken Congee", "calories": 180, "weeklySelections": 198, "dietCategories": ["local"], "ingredients": "Rice porridge, chicken, ginger, scallions", "allergens": []},
+          {"name": "Chinese Twist Cruller", "calories": 250, "weeklySelections": 167, "dietCategories": ["vegetarian"], "ingredients": "Dough, sugar, oil", "allergens": ["gluten", "eggs"]},
+          {"name": "Tofu Scramble", "calories": 160, "weeklySelections": 289, "dietCategories": ["vegetarian", "plant_based"], "ingredients": "Firm tofu, turmeric, vegetables", "allergens": ["soy"]},
+          {"name": "Omelet Bar", "calories": 250, "weeklySelections": 345, "dietCategories": ["local", "vegetarian"], "ingredients": "Eggs, cheese, vegetables", "allergens": ["eggs", "dairy"]},
+          {"name": "Blueberry Coffeecake", "calories": 320, "weeklySelections": 156, "dietCategories": ["vegetarian"], "ingredients": "Flour, blueberries, butter, sugar", "allergens": ["gluten", "dairy", "eggs"]},
+          {"name": "Chocolate Chip Scones", "calories": 350, "weeklySelections": 189, "dietCategories": ["vegetarian"], "ingredients": "Flour, chocolate chips, butter", "allergens": ["gluten", "dairy"]}
+        ],
+        "lunch": [
+          {"name": "Baked Herbs de Provence Chicken", "calories": 320, "weeklySelections": 456, "dietCategories": ["local", "antibiotic_free"], "ingredients": "Chicken breast, herbs de Provence, olive oil", "allergens": []},
+          {"name": "Black Bean Burger", "calories": 350, "weeklySelections": 312, "dietCategories": ["vegetarian", "plant_based"], "ingredients": "Black beans, onions, spices, lettuce, tomato", "allergens": ["soy", "gluten"]},
+          {"name": "Halal Burger Patty", "calories": 280, "weeklySelections": 289, "dietCategories": ["halal"], "ingredients": "Halal beef, spices", "allergens": []},
+          {"name": "Chicken Shoyu Ramen", "calories": 450, "weeklySelections": 378, "dietCategories": ["local"], "ingredients": "Ramen noodles, chicken broth, soy sauce, egg, vegetables", "allergens": ["gluten", "eggs", "soy", "fish", "shellfish"]},
+          {"name": "Cheese Pizza", "calories": 420, "weeklySelections": 398, "dietCategories": ["vegetarian"], "ingredients": "Pizza dough, mozzarella, tomato sauce", "allergens": ["gluten", "dairy"]},
+          {"name": "Pepperoni Pizza", "calories": 480, "weeklySelections": 367, "dietCategories": [], "ingredients": "Pizza dough, mozzarella, tomato sauce, pepperoni", "allergens": ["gluten", "dairy"]},
+          {"name": "Chicken & Vegetable Stir Fry", "calories": 340, "weeklySelections": 334, "dietCategories": ["local"], "ingredients": "Chicken, mixed vegetables, soy sauce, ginger", "allergens": ["soy"]},
+          {"name": "Vegetable Fried Rice", "calories": 320, "weeklySelections": 298, "dietCategories": ["vegetarian"], "ingredients": "Rice, vegetables, soy sauce, eggs", "allergens": ["soy", "eggs"]},
+          {"name": "Cauliflower & Potato Curry", "calories": 280, "weeklySelections": 256, "dietCategories": ["vegetarian", "plant_based"], "ingredients": "Cauliflower, potatoes, curry spices, coconut milk", "allergens": ["tree_nuts"]},
+          {"name": "Vegetable Korma Rasoi", "calories": 310, "weeklySelections": 234, "dietCategories": ["vegetarian"], "ingredients": "Mixed vegetables, yogurt, cream, spices", "allergens": ["dairy"]},
+          {"name": "Roasted Chicken Noodle Soup", "calories": 180, "weeklySelections": 345, "dietCategories": ["local"], "ingredients": "Chicken, noodles, vegetables, herbs", "allergens": ["gluten"]},
+          {"name": "Tomato Basil Soup", "calories": 150, "weeklySelections": 289, "dietCategories": ["vegetarian", "plant_based"], "ingredients": "Tomatoes, basil, olive oil, garlic", "allergens": []},
+          {"name": "Farro Tomato & Chickpea Salad", "calories": 220, "weeklySelections": 198, "dietCategories": ["vegetarian", "whole_grain"], "ingredients": "Farro, tomatoes, chickpeas, lemon dressing", "allergens": ["gluten"]},
+          {"name": "Manicotti", "calories": 380, "weeklySelections": 267, "dietCategories": ["vegetarian"], "ingredients": "Pasta tubes, ricotta, marinara sauce", "allergens": ["gluten", "dairy", "eggs"]}
+        ],
+        "dinner": [
+          {"name": "Mandarin Chicken with Cashews", "calories": 420, "weeklySelections": 389, "dietCategories": ["local"], "ingredients": "Chicken, mandarin orange sauce, cashews, vegetables", "allergens": ["tree_nuts", "soy"]},
+          {"name": "Kung Pao Pulmuone Tofu with Peanuts", "calories": 350, "weeklySelections": 312, "dietCategories": ["vegetarian", "plant_based"], "ingredients": "Tofu, peanuts, chili peppers, vegetables", "allergens": ["peanuts", "soy"]},
+          {"name": "Tantanmen Ramen", "calories": 480, "weeklySelections": 378, "dietCategories": [], "ingredients": "Ramen noodles, spicy sesame broth, ground pork, egg", "allergens": ["gluten", "eggs", "soy", "sesame"]},
+          {"name": "Vegetable Lo Mein", "calories": 380, "weeklySelections": 298, "dietCategories": ["vegetarian"], "ingredients": "Lo mein noodles, mixed vegetables, soy sauce", "allergens": ["gluten", "soy"]},
+          {"name": "Moroccan Chicken with Yogurt & Almonds", "calories": 390, "weeklySelections": 267, "dietCategories": ["halal"], "ingredients": "Chicken, yogurt sauce, almonds, lemon, spices", "allergens": ["dairy", "tree_nuts"]},
+          {"name": "Moroccan Rice with Almonds", "calories": 280, "weeklySelections": 234, "dietCategories": ["vegetarian"], "ingredients": "Rice, almonds, dried fruits, spices", "allergens": ["tree_nuts"]},
+          {"name": "Jamaican Curried Edamame", "calories": 220, "weeklySelections": 198, "dietCategories": ["vegetarian", "plant_based"], "ingredients": "Edamame, curry spices, coconut milk", "allergens": ["soy"]},
+          {"name": "Jamaican Rice & Beans", "calories": 310, "weeklySelections": 256, "dietCategories": ["vegetarian", "plant_based"], "ingredients": "Rice, kidney beans, coconut milk, thyme", "allergens": []},
+          {"name": "Beef Barbacoa", "calories": 420, "weeklySelections": 345, "dietCategories": ["local", "halal"], "ingredients": "Slow-cooked beef, chipotle, lime, cilantro", "allergens": []},
+          {"name": "Chicken Tinga", "calories": 350, "weeklySelections": 312, "dietCategories": ["local"], "ingredients": "Shredded chicken, chipotle tomato sauce, onions", "allergens": []},
+          {"name": "Oreo Cookie Cake", "calories": 380, "weeklySelections": 289, "dietCategories": ["vegetarian"], "ingredients": "Oreo cookies, cream, chocolate", "allergens": ["gluten", "dairy", "soy"]},
+          {"name": "Pumpkin Pie", "calories": 320, "weeklySelections": 234, "dietCategories": ["vegetarian"], "ingredients": "Pumpkin, spices, cream, pie crust", "allergens": ["gluten", "dairy", "eggs"]}
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "hallName": "Hampshire",
+      "hours": "07:00-21:00",
+      "mealHours": {
+        "breakfast": "07:00-10:30",
+        "lunch": "11:00-14:30",
+        "dinner": "17:00-21:00"
+      },
+      "meals": {
+        "breakfast": [
+          {"name": "Veggie Omelette", "calories": 250, "weeklySelections": 412, "dietCategories": ["vegetarian", "local"], "ingredients": "Eggs, peppers, onions, cheese", "allergens": ["eggs", "dairy"]},
+          {"name": "Avocado Toast", "calories": 280, "weeklySelections": 367, "dietCategories": ["vegetarian", "whole_grain"], "ingredients": "Sourdough bread, avocado, lime, red pepper flakes", "allergens": ["gluten"]},
+          {"name": "Smoothie Bowl", "calories": 220, "weeklySelections": 298, "dietCategories": ["vegetarian", "plant_based"], "ingredients": "Acai, banana, granola, mixed berries", "allergens": ["tree_nuts"]},
+          {"name": "French Toast", "calories": 320, "weeklySelections": 234, "dietCategories": ["vegetarian"], "ingredients": "Brioche bread, cinnamon, maple syrup", "allergens": ["gluten", "eggs", "dairy"]},
+          {"name": "Breakfast Sandwich", "calories": 380, "weeklySelections": 289, "dietCategories": ["local"], "ingredients": "English muffin, egg, bacon, cheese", "allergens": ["gluten", "eggs", "dairy"]},
+          {"name": "Greek Yogurt Parfait", "calories": 200, "weeklySelections": 256, "dietCategories": ["vegetarian"], "ingredients": "Greek yogurt, honey, granola, fresh fruit", "allergens": ["dairy", "gluten"]},
+          {"name": "Banana Pancakes", "calories": 340, "weeklySelections": 312, "dietCategories": ["vegetarian"], "ingredients": "Pancake batter, bananas, maple syrup", "allergens": ["gluten", "dairy", "eggs"]},
+          {"name": "Turkey Sausage", "calories": 160, "weeklySelections": 198, "dietCategories": ["local", "antibiotic_free"], "ingredients": "Turkey, sage, spices", "allergens": []}
+        ],
+        "lunch": [
+          {"name": "Grilled Salmon", "calories": 380, "weeklySelections": 412, "dietCategories": ["sustainable", "local"], "ingredients": "Atlantic salmon, lemon, dill, olive oil", "allergens": ["fish"]},
+          {"name": "Mediterranean Bowl", "calories": 350, "weeklySelections": 378, "dietCategories": ["vegetarian", "halal"], "ingredients": "Falafel, hummus, tabbouleh, pita", "allergens": ["sesame", "gluten"]},
+          {"name": "Veggie Wrap", "calories": 320, "weeklySelections": 298, "dietCategories": ["vegetarian", "whole_grain"], "ingredients": "Whole wheat wrap, hummus, roasted vegetables", "allergens": ["gluten", "sesame"]},
+          {"name": "Quinoa Salad", "calories": 280, "weeklySelections": 267, "dietCategories": ["vegetarian", "whole_grain", "plant_based"], "ingredients": "Quinoa, cucumber, tomato, lemon vinaigrette", "allergens": []},
+          {"name": "Falafel Plate", "calories": 320, "weeklySelections": 234, "dietCategories": ["vegetarian", "plant_based"], "ingredients": "Falafel, rice, mixed salad, tahini sauce", "allergens": ["sesame", "gluten"]},
+          {"name": "Chicken Shawarma", "calories": 390, "weeklySelections": 345, "dietCategories": ["halal"], "ingredients": "Spiced chicken, garlic sauce, pickles, pita", "allergens": ["dairy", "gluten"]},
+          {"name": "Lamb Kofta", "calories": 420, "weeklySelections": 289, "dietCategories": ["halal"], "ingredients": "Ground lamb, onions, spices, yogurt sauce", "allergens": ["dairy"]},
+          {"name": "Lentil Soup", "calories": 180, "weeklySelections": 256, "dietCategories": ["vegetarian", "plant_based"], "ingredients": "Red lentils, carrots, cumin, lemon", "allergens": []},
+          {"name": "Tabbouleh Salad", "calories": 160, "weeklySelections": 198, "dietCategories": ["vegetarian", "plant_based"], "ingredients": "Bulgur, parsley, tomatoes, mint, lemon", "allergens": ["gluten"]}
+        ],
+        "dinner": [
+          {"name": "Tofu Stir Fry", "calories": 290, "weeklySelections": 367, "dietCategories": ["vegetarian", "plant_based"], "ingredients": "Firm tofu, mixed vegetables, teriyaki sauce", "allergens": ["soy"]},
+          {"name": "BBQ Pulled Pork", "calories": 420, "weeklySelections": 334, "dietCategories": ["local"], "ingredients": "Slow-cooked pork shoulder, BBQ sauce, coleslaw", "allergens": []},
+          {"name": "Chicken Tikka Masala", "calories": 450, "weeklySelections": 398, "dietCategories": ["halal"], "ingredients": "Marinated chicken, tomato cream sauce, spices", "allergens": ["dairy"]},
+          {"name": "Beef Burrito Bowl", "calories": 520, "weeklySelections": 312, "dietCategories": ["halal"], "ingredients": "Seasoned beef, rice, beans, salsa, cheese", "allergens": ["dairy"]},
+          {"name": "Lamb Gyro", "calories": 450, "weeklySelections": 267, "dietCategories": ["halal"], "ingredients": "Seasoned lamb, pita bread, tzatziki, vegetables", "allergens": ["gluten", "dairy"]},
+          {"name": "Paneer Butter Masala", "calories": 380, "weeklySelections": 298, "dietCategories": ["vegetarian"], "ingredients": "Paneer cheese, tomato butter sauce, cream", "allergens": ["dairy"]},
+          {"name": "Vegetable Biryani", "calories": 340, "weeklySelections": 256, "dietCategories": ["vegetarian"], "ingredients": "Basmati rice, mixed vegetables, biryani spices", "allergens": []},
+          {"name": "Naan Bread", "calories": 180, "weeklySelections": 389, "dietCategories": ["vegetarian"], "ingredients": "Flour, yogurt, butter", "allergens": ["gluten", "dairy"]},
+          {"name": "Mango Lassi", "calories": 200, "weeklySelections": 234, "dietCategories": ["vegetarian"], "ingredients": "Yogurt, mango, sugar, cardamom", "allergens": ["dairy"]}
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "hallName": "Berkshire",
+      "hours": "07:00-21:00",
+      "mealHours": {
+        "breakfast": "07:00-10:30",
+        "lunch": "11:00-14:30",
+        "dinner": "17:00-21:00"
+      },
+      "meals": {
+        "breakfast": [
+          {"name": "Congee", "calories": 180, "weeklySelections": 378, "dietCategories": ["vegetarian"], "ingredients": "Rice porridge, ginger, scallions, soy sauce", "allergens": ["soy"]},
+          {"name": "Dim Sum Sampler", "calories": 350, "weeklySelections": 312, "dietCategories": ["local"], "ingredients": "Steamed dumplings, siu mai, char siu buns", "allergens": ["gluten", "soy", "shellfish"]},
+          {"name": "Miso Soup", "calories": 80, "weeklySelections": 289, "dietCategories": ["vegetarian", "plant_based"], "ingredients": "Miso paste, tofu, seaweed, scallions", "allergens": ["soy"]},
+          {"name": "Rice Balls (Onigiri)", "calories": 200, "weeklySelections": 234, "dietCategories": ["vegetarian"], "ingredients": "Seasoned rice, nori, umeboshi filling", "allergens": ["soy", "fish"]},
+          {"name": "Steamed Red Bean Buns", "calories": 220, "weeklySelections": 198, "dietCategories": ["vegetarian", "plant_based"], "ingredients": "Fluffy buns, sweet red bean paste", "allergens": ["gluten"]},
+          {"name": "Tamagoyaki", "calories": 150, "weeklySelections": 267, "dietCategories": ["vegetarian"], "ingredients": "Eggs, dashi, sugar, soy sauce", "allergens": ["eggs", "fish", "soy"]},
+          {"name": "Vegetable Gyoza", "calories": 180, "weeklySelections": 245, "dietCategories": ["vegetarian"], "ingredients": "Cabbage, carrots, ginger, wrapper", "allergens": ["gluten", "soy"]}
+        ],
+        "lunch": [
+          {"name": "Sushi Rolls Assortment", "calories": 320, "weeklySelections": 423, "dietCategories": ["sustainable"], "ingredients": "Fresh fish, sushi rice, nori, wasabi", "allergens": ["fish", "soy", "shellfish"]},
+          {"name": "Poke Bowl", "calories": 380, "weeklySelections": 389, "dietCategories": ["sustainable", "whole_grain"], "ingredients": "Fresh tuna, brown rice, edamame, seaweed", "allergens": ["fish", "soy"]},
+          {"name": "Pad Thai", "calories": 420, "weeklySelections": 356, "dietCategories": ["vegetarian"], "ingredients": "Rice noodles, tofu, peanuts, bean sprouts, lime", "allergens": ["peanuts", "soy", "eggs"]},
+          {"name": "Spring Rolls", "calories": 180, "weeklySelections": 312, "dietCategories": ["vegetarian", "plant_based"], "ingredients": "Rice paper, vegetables, vermicelli, mint", "allergens": []},
+          {"name": "Vegetable Dumplings", "calories": 280, "weeklySelections": 267, "dietCategories": ["vegetarian"], "ingredients": "Cabbage, mushroom, ginger, wrapper", "allergens": ["gluten", "soy"]},
+          {"name": "Tom Yum Soup", "calories": 150, "weeklySelections": 234, "dietCategories": [], "ingredients": "Lemongrass, shrimp, mushrooms, lime leaves", "allergens": ["shellfish", "fish"]},
+          {"name": "Green Curry", "calories": 380, "weeklySelections": 298, "dietCategories": ["vegetarian"], "ingredients": "Coconut milk, green curry paste, tofu, vegetables", "allergens": ["tree_nuts"]},
+          {"name": "Teriyaki Salmon", "calories": 340, "weeklySelections": 345, "dietCategories": ["sustainable"], "ingredients": "Salmon fillet, teriyaki glaze, sesame seeds", "allergens": ["fish", "soy", "sesame"]}
+        ],
+        "dinner": [
+          {"name": "Ramen Bowl", "calories": 480, "weeklySelections": 412, "dietCategories": ["local"], "ingredients": "Tonkotsu broth, noodles, chashu pork, egg, vegetables", "allergens": ["gluten", "eggs", "soy"]},
+          {"name": "Kung Pao Chicken", "calories": 390, "weeklySelections": 378, "dietCategories": ["local"], "ingredients": "Diced chicken, peanuts, dried chilies, Sichuan pepper", "allergens": ["peanuts", "soy"]},
+          {"name": "Bibimbap", "calories": 480, "weeklySelections": 334, "dietCategories": ["vegetarian", "whole_grain"], "ingredients": "Rice, assorted vegetables, egg, gochujang sauce", "allergens": ["eggs", "soy", "sesame"]},
+          {"name": "Orange Chicken", "calories": 450, "weeklySelections": 312, "dietCategories": ["local"], "ingredients": "Crispy chicken, sweet orange sauce, broccoli", "allergens": ["gluten", "soy", "eggs"]},
+          {"name": "Thai Green Curry", "calories": 380, "weeklySelections": 289, "dietCategories": ["vegetarian", "plant_based"], "ingredients": "Coconut curry, mixed vegetables, Thai basil", "allergens": ["tree_nuts"]},
+          {"name": "Teriyaki Beef Bowl", "calories": 450, "weeklySelections": 267, "dietCategories": ["halal"], "ingredients": "Sliced beef, teriyaki sauce, steamed rice", "allergens": ["soy", "gluten"]},
+          {"name": "Mapo Tofu", "calories": 320, "weeklySelections": 234, "dietCategories": ["vegetarian"], "ingredients": "Silken tofu, spicy chili sauce, ground pork optional", "allergens": ["soy"]},
+          {"name": "Korean Fried Chicken", "calories": 420, "weeklySelections": 356, "dietCategories": [], "ingredients": "Crispy fried chicken, gochujang glaze", "allergens": ["gluten", "soy", "eggs"]},
+          {"name": "Mochi Ice Cream", "calories": 180, "weeklySelections": 298, "dietCategories": ["vegetarian"], "ingredients": "Rice flour, ice cream, various flavors", "allergens": ["dairy"]}
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "hallName": "Franklin",
+      "hours": "07:00-21:00",
+      "mealHours": {
+        "breakfast": "07:00-10:30",
+        "lunch": "11:00-14:30",
+        "dinner": "17:00-21:00"
+      },
+      "meals": {
+        "breakfast": [
+          {"name": "Butter Croissant", "calories": 280, "weeklySelections": 423, "dietCategories": ["vegetarian"], "ingredients": "Butter croissant, jam", "allergens": ["gluten", "dairy", "eggs"]},
+          {"name": "Frittata", "calories": 300, "weeklySelections": 378, "dietCategories": ["vegetarian", "local"], "ingredients": "Eggs, cheese, seasonal vegetables, herbs", "allergens": ["eggs", "dairy"]},
+          {"name": "Bruschetta", "calories": 180, "weeklySelections": 312, "dietCategories": ["vegetarian", "local"], "ingredients": "Toasted ciabatta, tomatoes, basil, garlic", "allergens": ["gluten"]},
+          {"name": "Cappuccino", "calories": 120, "weeklySelections": 456, "dietCategories": ["vegetarian"], "ingredients": "Espresso, steamed milk, foam", "allergens": ["dairy"]},
+          {"name": "Almond Biscotti", "calories": 150, "weeklySelections": 234, "dietCategories": ["vegetarian"], "ingredients": "Almond biscotti, chocolate dip", "allergens": ["gluten", "tree_nuts", "dairy"]},
+          {"name": "Prosciutto & Melon", "calories": 160, "weeklySelections": 198, "dietCategories": ["local"], "ingredients": "Prosciutto di Parma, cantaloupe melon", "allergens": []},
+          {"name": "Ricotta Pancakes", "calories": 340, "weeklySelections": 289, "dietCategories": ["vegetarian"], "ingredients": "Ricotta cheese, flour, eggs, lemon zest", "allergens": ["gluten", "dairy", "eggs"]}
+        ],
+        "lunch": [
+          {"name": "Wood-Fired Margherita Pizza", "calories": 420, "weeklySelections": 478, "dietCategories": ["vegetarian"], "ingredients": "San Marzano tomatoes, fresh mozzarella, basil", "allergens": ["gluten", "dairy"]},
+          {"name": "Caprese Salad", "calories": 220, "weeklySelections": 356, "dietCategories": ["vegetarian", "local"], "ingredients": "Fresh mozzarella, tomatoes, basil, balsamic", "allergens": ["dairy"]},
+          {"name": "Minestrone Soup", "calories": 180, "weeklySelections": 298, "dietCategories": ["vegetarian", "plant_based"], "ingredients": "Vegetables, beans, pasta, tomato broth", "allergens": ["gluten"]},
+          {"name": "Penne Arrabbiata", "calories": 380, "weeklySelections": 312, "dietCategories": ["vegetarian", "plant_based"], "ingredients": "Penne pasta, spicy tomato sauce, garlic, chili", "allergens": ["gluten"]},
+          {"name": "Pepperoni Pizza", "calories": 480, "weeklySelections": 389, "dietCategories": [], "ingredients": "Pizza dough, mozzarella, tomato sauce, pepperoni", "allergens": ["gluten", "dairy"]},
+          {"name": "Caesar Salad", "calories": 200, "weeklySelections": 267, "dietCategories": ["vegetarian"], "ingredients": "Romaine, parmesan, croutons, caesar dressing", "allergens": ["dairy", "gluten", "eggs", "fish"]},
+          {"name": "Panini Italiano", "calories": 450, "weeklySelections": 334, "dietCategories": ["local"], "ingredients": "Ciabatta, prosciutto, mozzarella, tomato, pesto", "allergens": ["gluten", "dairy", "tree_nuts"]},
+          {"name": "Risotto Milanese", "calories": 380, "weeklySelections": 245, "dietCategories": ["vegetarian"], "ingredients": "Arborio rice, saffron, parmesan, white wine", "allergens": ["dairy"]}
+        ],
+        "dinner": [
+          {"name": "Chicken Parmesan", "calories": 520, "weeklySelections": 412, "dietCategories": ["local"], "ingredients": "Breaded chicken, marinara sauce, mozzarella", "allergens": ["gluten", "dairy", "eggs"]},
+          {"name": "Pasta Carbonara", "calories": 480, "weeklySelections": 389, "dietCategories": ["local"], "ingredients": "Spaghetti, pancetta, egg, parmesan, black pepper", "allergens": ["gluten", "eggs", "dairy"]},
+          {"name": "Lasagna Bolognese", "calories": 550, "weeklySelections": 356, "dietCategories": ["local"], "ingredients": "Pasta layers, beef ragu, bechamel, parmesan", "allergens": ["gluten", "dairy", "eggs"]},
+          {"name": "Tiramisu", "calories": 320, "weeklySelections": 312, "dietCategories": ["vegetarian"], "ingredients": "Ladyfingers, mascarpone, espresso, cocoa", "allergens": ["gluten", "dairy", "eggs"]},
+          {"name": "Gnocchi al Pesto", "calories": 440, "weeklySelections": 267, "dietCategories": ["vegetarian"], "ingredients": "Potato gnocchi, basil pesto, pine nuts", "allergens": ["gluten", "dairy", "tree_nuts"]},
+          {"name": "Cannoli", "calories": 280, "weeklySelections": 289, "dietCategories": ["vegetarian"], "ingredients": "Crispy shell, ricotta cream, chocolate chips", "allergens": ["gluten", "dairy", "eggs"]},
+          {"name": "Osso Buco", "calories": 480, "weeklySelections": 198, "dietCategories": ["local"], "ingredients": "Braised veal shank, gremolata, vegetables", "allergens": []},
+          {"name": "Eggplant Parmesan", "calories": 380, "weeklySelections": 234, "dietCategories": ["vegetarian"], "ingredients": "Breaded eggplant, marinara, mozzarella", "allergens": ["gluten", "dairy", "eggs"]},
+          {"name": "Panna Cotta", "calories": 280, "weeklySelections": 245, "dietCategories": ["vegetarian"], "ingredients": "Cream, vanilla, berry compote", "allergens": ["dairy"]}
+        ]
+      }
+    }
+  ],
+  "allergenCategories": [
+    {"id": "dairy", "name": "Dairy", "icon": "🥛"},
+    {"id": "eggs", "name": "Eggs", "icon": "🥚"},
+    {"id": "fish", "name": "Fish", "icon": "🐟"},
+    {"id": "shellfish", "name": "Shellfish", "icon": "🦐"},
+    {"id": "tree_nuts", "name": "Tree Nuts", "icon": "🌰"},
+    {"id": "peanuts", "name": "Peanuts", "icon": "🥜"},
+    {"id": "gluten", "name": "Gluten", "icon": "🌾"},
+    {"id": "soy", "name": "Soy", "icon": "🫘"},
+    {"id": "sesame", "name": "Sesame", "icon": "⚪"},
+    {"id": "corn", "name": "Corn", "icon": "🌽"}
+  ],
+  "dietCategories": [
+    {"id": "vegetarian", "name": "Vegetarian", "icon": "🥬"},
+    {"id": "local", "name": "Local", "icon": "📍"},
+    {"id": "sustainable", "name": "Sustainable", "icon": "♻️"},
+    {"id": "whole_grain", "name": "Whole Grain", "icon": "🌾"},
+    {"id": "halal", "name": "Halal", "icon": "☪️"},
+    {"id": "antibiotic_free", "name": "Antibiotic Free", "icon": "💊"},
+    {"id": "plant_based", "name": "Plant Based", "icon": "🌱"}
+  ]
+}
