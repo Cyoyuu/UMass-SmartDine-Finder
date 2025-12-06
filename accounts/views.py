@@ -11,6 +11,15 @@ import os
 from django.conf import settings
 from django.http import JsonResponse
 from menus.models import DiningHall
+from recommendation import get_recommendations_for_all_dining
+from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
+from .models import UserFoodPreference
+from .forms import FoodPreferenceForm
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from django.views import View
+
 
 class RegisterView(CreateView):
     template_name = 'registration/register.html'
@@ -118,3 +127,85 @@ def logout_then_login(request):
     """
     logout(request)
     return redirect('login')
+
+class RecommendView(LoginRequiredMixin, View):
+    login_url = "/login/"  # optional
+    redirect_field_name = "next"
+    template_name = "recommend.html"
+
+    def get(self, request):
+        return render(request, self.template_name, {
+            "preference": "",
+            "recommendations": None,
+            "error": None,
+        })
+
+    def post(self, request):
+        preference = request.POST.get("preference", "").strip()
+
+        recommendations = None
+        error = None
+
+        if preference:
+            try:
+                # Load saved preferences
+                pref, _ = UserFoodPreference.objects.get_or_create(user=request.user)
+                stored = pref.data or {}
+
+                # Merge stored preferences + free-text input
+                # Free text still goes to LLM — stored prefs override where needed
+                recommendations = get_recommendations_for_all_dining(
+                    mood_text=preference,
+                    stored_preferences=stored
+                )
+
+            except Exception as e:
+                error = str(e)
+
+        context = {
+            "preference": preference,
+            "recommendations": recommendations,
+            "error": error,
+        }
+        return render(request, self.template_name, context)
+
+
+@method_decorator(login_required, name='dispatch')
+class UserPreferenceView(View):
+    template_name = "preferences.html"
+
+    def get(self, request):
+        # Load user's existing preferences
+        pref, _ = UserFoodPreference.objects.get_or_create(user=request.user)
+        
+        initial = pref.data if pref.data else {}
+        form = FoodPreferenceForm(initial=initial)
+        return render(request, self.template_name, {"form": form})
+
+    def post(self, request):
+        form = FoodPreferenceForm(request.POST)
+
+        if form.is_valid():
+            cleaned = form.cleaned_data
+
+            # Save structured data exactly as lists / strings
+            data = {
+                "diet": cleaned["diet"],
+                "avoid_allergens": cleaned["avoid_allergens"],
+                "avoid_ingredients": cleaned["avoid_ingredients"],
+                "goals": cleaned["goals"],
+                "likes": cleaned["likes"],
+                "dislikes": cleaned["dislikes"],
+            }
+
+            pref, _ = UserFoodPreference.objects.get_or_create(user=request.user)
+            pref.data = data
+            pref.save()
+
+            return render(request, self.template_name, {
+                "form": form,
+                "success": "Preferences updated successfully!"
+            })
+
+        return render(request, self.template_name, {"form": form})
+

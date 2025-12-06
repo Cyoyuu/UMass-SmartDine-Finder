@@ -3,12 +3,26 @@
   {% if user.is_authenticated %}
     <h1>Welcome back, {{ user.username }}!</h1>
     <p>Use the navigation menu above to access the dining hall menus.</p>
+
+    <div class="links" style="margin-top: 20px;">
+      <a class="btn" href="/recommend/">🍽️ Get Personalized Recommendations</a>
+    </div>
+
+    <div class="links" style="margin-top: 10px;">
+      <a class="btn btn-outline" href="/preferences/">⚙️ Set Your Food Preferences</a>
+    </div>
+
   {% else %}
     <h1>Welcome to SmartDine Finder 🍽️</h1>
     <p>Discover your perfect dining hall experience.</p>
+
     <div class="links">
       <a class="btn" href="/login/">Login</a>
       <a class="btn btn-outline" href="/register/">Register</a>
+    </div>
+
+    <div class="links" style="margin-top: 20px;">
+      <a class="btn" href="/recommend/">Try Recommendations →</a>
     </div>
   {% endif %}
 {% endblock %}

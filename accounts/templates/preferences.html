@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="max-width: 700px; margin: 2rem auto;">
+  
+  <h1 class="mb-4">🍽️ Your Food Preferences</h1>
+
+  {% if success %}
+    <div class="alert alert-success">{{ success }}</div>
+  {% endif %}
+
+  <form method="post" class="card p-4 shadow-sm">
+    {% csrf_token %}
+
+    <div class="mb-3">
+      <label class="form-label">Diet Preference</label>
+      {{ form.diet }}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Allergies (Avoid)</label>
+      <div class="form-check">
+        {{ form.avoid_allergens }}
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Ingredients to Avoid</label>
+      <div class="form-check">
+        {{ form.avoid_ingredients }}
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Health Goals</label>
+      <div class="form-check">
+        {{ form.goals }}
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Food Likes</label>
+      {{ form.likes }}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Food Dislikes</label>
+      {{ form.dislikes }}
+    </div>
+
+    <button class="btn btn-primary w-100">Save Preferences</button>
+  </form>
+</div>
+{% endblock %}
