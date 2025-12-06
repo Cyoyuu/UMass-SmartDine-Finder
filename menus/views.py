@@ -1,57 +1,125 @@
 from django.http import JsonResponse
-from .models import DiningHall
-from datetime import datetime
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from datetime import datetime
 from .models import DiningHall, Review
 
-print("### menus_view loaded ###")
 
-def is_open_now(hours_str):
-    """Check if current time is within open hours (HH:MM-HH:MM)."""
+def is_hall_open(hours_str):
+    """Check if dining hall is currently open based on hours string."""
     try:
-        open_time_str, close_time_str = hours_str.split('-')
-        now = datetime.now().time()
-        open_time = datetime.strptime(open_time_str, "%H:%M").time()
-        close_time = datetime.strptime(close_time_str, "%H:%M").time()
-        return open_time <= now <= close_time
+        start_str, end_str = hours_str.split('-')
+        start_time = datetime.strptime(start_str, '%H:%M').time()
+        end_time = datetime.strptime(end_str, '%H:%M').time()
+        current_time = datetime.now().time()
+        return start_time <= current_time <= end_time
     except Exception:
         return False
 
-def menus_view(request):
-    halls = DiningHall.objects.all()
-    response = []
 
-    for hall in halls:
-        response.append({
-            "hallName": hall.name,
-            "hours": hall.hours,
-            "isOpen": is_open_now(hall.hours),
-            "meals": hall.meals or {"breakfast": [], "lunch": [], "dinner": []}
-        })
+def get_dining_halls_data():
+    """Load dining hall data from database with reviews."""
+    try:
+        halls = DiningHall.objects.all()
+        response = []
 
-    return JsonResponse(response, safe=False)
+        for hall in halls:
+            # Get reviews for this dining hall
+            reviews = Review.objects.filter(diningHall=hall).select_related('user')
+            reviews_data = []
+            for review in reviews:
+                reviews_data.append({
+                    "id": review.id,
+                    "username": review.user.username,
+                    "rating": review.rating,
+                    "reviewText": review.reviewText,
+                    "foodPreferences": review.foodPreferences,
+                    "createdAt": review.createdAt.strftime("%Y-%m-%d %H:%M"),
+                })
+            
+            # Calculate average rating
+            avg_rating = sum(r["rating"] for r in reviews_data) / len(reviews_data) if reviews_data else 0
+            
+            response.append({
+                "id": hall.id,
+                "hallName": hall.hallName,
+                "hours": hall.hours,
+                "mealHours": hall.mealHours,
+                "isOpen": is_hall_open(hall.hours),
+                "meals": hall.meals or {"breakfast": [], "lunch": [], "dinner": []},
+                "reviews": reviews_data,
+                "avgRating": round(avg_rating, 1),
+                "reviewCount": len(reviews_data),
+            })
+
+        return response
+    except Exception:
+        return []
+
 
 @login_required
-def writeReview(request, hall_id):
-    hall = get_object_or_404(DiningHall, pk=hall_id)
+def menu_view(request):
+    """Display dining halls with their menus and open/closed status."""
+    try:
+        dining_halls = get_dining_halls_data()
+        
+        context = {
+            'dining_halls': dining_halls,
+            'food_preference_choices': Review.FOOD_PREFERENCE_CHOICES,
+            'error': None
+        }
+    except Exception as e:
+        context = {
+            'dining_halls': [],
+            'food_preference_choices': Review.FOOD_PREFERENCE_CHOICES,
+            'error': f"Error loading menu data: {str(e)}"
+        }
+    
+    return render(request, 'menus/menu.html', context)
 
+
+@login_required
+def api_menus_view(request):
+    """API endpoint that returns dining hall data as JSON."""
+    try:
+        dining_halls = get_dining_halls_data()
+        return JsonResponse(dining_halls, safe=False)
+    except Exception as e:
+        return JsonResponse({'error': f"Error loading menu data: {str(e)}"}, status=500)
+
+
+@login_required
+def submit_review(request, hall_id):
+    """Handle review submission via AJAX."""
     if request.method == "POST":
-        rating = request.POST.get("rating")
-        reviewText = request.POST.get("reviewText")
-
-        Review.objects.create(
-            username=request.user.username,
-            diningHall=hall,
-            rating=rating,
-            reviewText=reviewText,
-            likes=0
-        )
-
-        return redirect("dining_hall_detail", hall_id=hall.id)
-
-    context = {
-        "username": request.user.username,
-        "diningHall": hall,
-    }
-    return render(request, "write_review.html", context)
+        try:
+            hall = DiningHall.objects.get(pk=hall_id)
+            rating = int(request.POST.get("rating", 5))
+            reviewText = request.POST.get("reviewText", "")
+            foodPreferences = request.POST.getlist("foodPreferences")
+            
+            review = Review.objects.create(
+                user=request.user,
+                diningHall=hall,
+                rating=rating,
+                reviewText=reviewText,
+                foodPreferences=foodPreferences
+            )
+            
+            return JsonResponse({
+                "success": True,
+                "review": {
+                    "id": review.id,
+                    "username": review.user.username,
+                    "rating": review.rating,
+                    "reviewText": review.reviewText,
+                    "foodPreferences": review.foodPreferences,
+                    "createdAt": review.createdAt.strftime("%Y-%m-%d %H:%M"),
+                }
+            })
+        except DiningHall.DoesNotExist:
+            return JsonResponse({"success": False, "error": "Dining hall not found"}, status=404)
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)}, status=500)
+    
+    return JsonResponse({"success": False, "error": "Invalid request method"}, status=405)
