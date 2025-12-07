@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='dininghall',
             name='menuByDate',
-            field=models.JSONField(blank=True, default=list),
+            field=models.TextField(blank=True, null=True),
         ),
     ]
