@@ -1,0 +1,3 @@
+[submodule "umass-toolkit"]
+	path = umass-toolkit
+	url = https://github.com/simon-andrews/umass-toolkit.git

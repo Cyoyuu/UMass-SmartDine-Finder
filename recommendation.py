@@ -6,9 +6,9 @@ import os
 from datetime import datetime, date
 from collections import defaultdict
 from pathlib import Path
+from generator import Generator
 
 from django.utils import timezone
-from openai import OpenAI
 
 # Load environment variables from .env file using python-dotenv
 from dotenv import load_dotenv
@@ -23,17 +23,9 @@ if os.path.exists(_umass_toolkit_path) and _umass_toolkit_path not in sys.path:
     sys.path.insert(0, _umass_toolkit_path)
 from umass_toolkit.dining import get_locations, get_menu
 
-
-# Get API key from environment variables (loaded from .env file or system env)
-_openrouter_api_key = os.environ.get('OPENROUTER_API_KEY') or os.environ.get('OPENAI_API_KEY')
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=_openrouter_api_key,
-    default_headers={
-        "HTTP-Referer": "https://github.com/yourusername/UMass-SmartDine-Finder",  # Optional: for analytics
-        "X-Title": "UMass SmartDine Finder",  # Optional: app name
-    }
-) if _openrouter_api_key else None
+with open("lm_config.json", "r") as f:
+    lm_config = json.load(f)
+    generator = Generator(lm_source=lm_config['lm_source'], lm_id=lm_config['lm_id'], max_tokens=4096, temperature=0.2)
 
 DINING_SLUGS = ["berkshire", "worcester", "franklin", "hampshire"]
 
@@ -219,23 +211,7 @@ Return ONLY valid JSON like:
 }}
 """
 
-    if client is None:
-        raise ValueError(
-            "OpenRouter API key not found. Please set OPENROUTER_API_KEY or OPENAI_API_KEY environment variable."
-        )
-    
-    # OpenRouter supports many models. Using a cost-effective model.
-    # You can change this to any model supported by OpenRouter (e.g., "openai/gpt-4o-mini", "anthropic/claude-3-haiku", etc.)
-    resp = client.chat.completions.create(
-        model="openai/gpt-4o-mini",  # OpenRouter model format: provider/model-name
-        messages=[
-            {"role": "system", "content": "You output ONLY JSON. No explanations."},
-            {"role": "user", "content": prompt},
-        ],
-        temperature=0.2
-    )
-
-    raw = resp.choices[0].message.content.strip()
+    raw = generator.generate(prompt, json_mode=True)
     parsed = _extract_json(raw)
 
     result = {slug: parsed.get(slug, []) for slug in DINING_SLUGS}
