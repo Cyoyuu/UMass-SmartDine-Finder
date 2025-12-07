@@ -702,6 +702,16 @@
     color: #1e293b;
   }
 
+  .primary-hall-tag {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6366f1;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    padding: 4px 10px;
+    border-radius: 12px;
+    margin-left: 8px;
+  }
+
   .total-cal {
     margin-left: auto;
     font-size: 13px;
@@ -1478,6 +1488,14 @@
     initWeekendLogic();
     setTimeout(generateVisualization, 100);
     loadLastSelection();
+    
+    // Listen for selection confirmation to update last selection
+    window.addEventListener('selectionConfirmed', () => {
+      // Reload last selection after a short delay to ensure server has updated
+      setTimeout(() => {
+        loadLastSelection();
+      }, 500);
+    });
   });
 
   // Handle weekend - no breakfast on Saturdays and Sundays
@@ -1515,7 +1533,7 @@
     window.isWeekend = isWeekend;
   }
 
-  // Load last selection from database (excluding today - show previous day's selection)
+  // Load last selection from database (show most recent day with data, including today)
   async function loadLastSelection() {
     const container = document.getElementById('lastSelectionBody');
     if (!container) return;
@@ -1525,11 +1543,9 @@
       const data = await response.json();
       
       if (data.success && data.history) {
-        // Get today's date string
-        const today = new Date().toISOString().split('T')[0];
-        
-        // Find the most recent day with data, EXCLUDING today
-        const lastDay = data.history.find(day => day.hasData && day.date !== today);
+        // Find the most recent day with data (history is already sorted by date descending)
+        // This includes today if it has data
+        const lastDay = data.history.find(day => day.hasData);
         
         if (lastDay && lastDay.meals && lastDay.meals.length > 0) {
           renderLastSelection(lastDay);
@@ -1555,16 +1571,20 @@
     
     // Group meals by meal type
     const mealsByType = {
-      breakfast: { items: [], hall: '', calories: 0 },
-      lunch: { items: [], hall: '', calories: 0 },
-      dinner: { items: [], hall: '', calories: 0 }
+      breakfast: { items: [], halls: new Set(), calories: 0 },
+      lunch: { items: [], halls: new Set(), calories: 0 },
+      dinner: { items: [], halls: new Set(), calories: 0 }
     };
     
     meals.forEach(meal => {
       const type = meal.mealType || 'lunch';
       if (mealsByType[type]) {
         mealsByType[type].items.push(meal);
-        mealsByType[type].hall = meal.hall || '';
+        // Use diningHall field (not hall)
+        const hall = meal.diningHall || meal.hall || '';
+        if (hall) {
+          mealsByType[type].halls.add(hall);
+        }
         mealsByType[type].calories += (meal.calories || 0);
       }
     });
@@ -1584,12 +1604,16 @@
     ['breakfast', 'lunch', 'dinner'].forEach(type => {
       const mealData = mealsByType[type];
       if (mealData.items.length > 0) {
+        // Get halls for this meal type (convert Set to Array)
+        const halls = Array.from(mealData.halls);
+        const hallDisplay = halls.length > 0 ? halls.join(', ') : '';
+        
         html += `
           <div class="meal-section-group">
             <div class="meal-section-header">
               <span class="meal-type-icon">${mealIcons[type]}</span>
               <span class="meal-type-label">${mealLabels[type]}</span>
-              <span class="meal-hall-tag">${mealData.hall}</span>
+              ${hallDisplay ? `<span class="meal-hall-tag">${hallDisplay}</span>` : ''}
             </div>
             <div class="meal-section-items">
         `;

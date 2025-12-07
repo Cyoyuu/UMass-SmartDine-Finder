@@ -1329,7 +1329,58 @@
     });
   });
 
-  document.getElementById('prefsForm').addEventListener('submit', function() {
+  document.getElementById('prefsForm').addEventListener('submit', function(e) {
+    // Get old preferences from server (passed via template as JSON strings)
+    const oldAllergens = JSON.parse('{{ profile_allergens_json|escapejs }}');
+    const oldDietPreferences = JSON.parse('{{ profile_diet_preferences_json|escapejs }}');
+    
+    // Get new preferences from form
+    const newAllergens = Array.from(document.querySelectorAll('input[name="allergens"]:checked')).map(el => el.value).sort();
+    const newDietPreferences = Array.from(document.querySelectorAll('input[name="dietPreferences"]:checked')).map(el => el.value).sort();
+    
+    // Compare old and new preferences
+    const oldAllergensSorted = (oldAllergens || []).sort();
+    const oldDietPreferencesSorted = (oldDietPreferences || []).sort();
+    
+    // Check if preferences changed
+    const allergensChanged = JSON.stringify(oldAllergensSorted) !== JSON.stringify(newAllergens);
+    const dietPreferencesChanged = JSON.stringify(oldDietPreferencesSorted) !== JSON.stringify(newDietPreferences);
+    
+    // If either allergens or diet preferences changed, clear today's selection
+    if (allergensChanged || dietPreferencesChanged) {
+      if (typeof SelectionManager !== 'undefined') {
+        // Clear selections from localStorage
+        SelectionManager.saveSelections([]);
+        localStorage.removeItem(SelectionManager.LOCKED_HALLS_KEY);
+        
+        // Immediately sync empty selection to server (don't wait for debounce)
+        if (SelectionManager.syncDebounce) {
+          clearTimeout(SelectionManager.syncDebounce);
+        }
+        
+        // Send empty selection to server immediately
+        fetch('/menus/history/save/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': SelectionManager.getCSRFToken()
+          },
+          body: JSON.stringify({ meals: [] })
+        }).catch(err => console.log('Sync error:', err));
+        
+        // Show a friendly message explaining why
+        if (typeof showGlobalToast !== 'undefined') {
+          const changeType = allergensChanged && dietPreferencesChanged 
+            ? 'preferences and allergies' 
+            : allergensChanged 
+            ? 'allergies' 
+            : 'diet preferences';
+          showGlobalToast(`✓ Preferences updated. Today's selection cleared due to ${changeType} change.`, 'info');
+        }
+      }
+    }
+    
+    // Save new preferences to localStorage
     savePrefsToLocalStorage();
   });
 </script>

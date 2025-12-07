@@ -146,7 +146,8 @@ class DiningHall(models.Model):
     meals = models.JSONField(default=dict, blank=True)
     # Menu data organized by date for date-specific views
     # Format: [{"date": "2025-12-06", "dateDisplay": "Dec 6", "dayOfWeek": "Saturday", "isWeekend": true, "meals": {...}}, ...]
-    menuByDate = models.JSONField(default=list, blank=True)
+    # Note: Database stores this as TextField, not JSONField
+    menuByDate = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.hallName

@@ -746,6 +746,24 @@
     font-size: 10px;
   }
 
+  .menu-chip.selected-other-hall {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #64748b;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  .menu-chip.selected-other-hall::after {
+    content: ' ⚠';
+    font-size: 10px;
+  }
+
+  .menu-chip.selected-other-hall:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+  }
+
   .chip-tooltip {
     position: absolute;
     bottom: calc(100% + 8px);
@@ -2087,16 +2105,32 @@
     window.isWeekend = isWeekend;
   }
 
-  // Sync with global SelectionManager - only sync current meal type
+  // Sync with global SelectionManager - mark items selected across all halls
   function syncWithGlobalSelection() {
     if (typeof SelectionManager !== 'undefined') {
       const selections = SelectionManager.getSelections();
-      // Mark chips that are already selected FOR THE CURRENT MEAL TYPE ONLY
+      // Mark chips that are already selected (by name, regardless of hall or meal type)
       document.querySelectorAll('.menu-chip').forEach(chip => {
         const name = chip.dataset.name;
-        // Only show selected if this item was added for the current meal type
-        const isSelected = selections.some(s => s.name === name && s.mealType === currentMeal);
+        // Check if this item name exists in selections (cross-hall uniqueness)
+        const isSelected = selections.some(s => s.name === name);
         chip.classList.toggle('selected', isSelected);
+        
+        // Add disabled state if selected in another hall
+        if (isSelected) {
+          const selectedItem = selections.find(s => s.name === name);
+          const currentHall = chip.closest('.rec-card')?.querySelector('.image-hall-name')?.textContent || 'Unknown';
+          if (selectedItem && selectedItem.hall !== currentHall) {
+            chip.classList.add('selected-other-hall');
+            chip.title = `Already selected from ${selectedItem.hall}`;
+          } else {
+            chip.classList.remove('selected-other-hall');
+            chip.title = '';
+          }
+        } else {
+          chip.classList.remove('selected-other-hall');
+          chip.title = '';
+        }
       });
     }
   }
@@ -2255,10 +2289,21 @@
     });
   }
 
-  // Chip Handlers - now uses global SelectionManager with per-meal selection
+  // Chip Handlers - now uses global SelectionManager with cross-hall uniqueness
   function initChipHandlers() {
     document.querySelectorAll('.menu-chip').forEach(chip => {
       chip.addEventListener('click', function() {
+        // Don't allow clicking if selected in another hall
+        if (this.classList.contains('selected-other-hall')) {
+          const selections = SelectionManager.getSelections();
+          const name = this.dataset.name;
+          const selectedItem = selections.find(s => s.name === name);
+          if (selectedItem) {
+            showToast(`"${name}" is already selected from ${selectedItem.hall}. Please remove it first.`, true);
+          }
+          return;
+        }
+        
         const name = this.dataset.name;
         const calories = parseInt(this.dataset.calories) || 0;
         const hallCard = this.closest('.rec-card');
@@ -2266,17 +2311,18 @@
 
         if (typeof SelectionManager !== 'undefined') {
           const selections = SelectionManager.getSelections();
-          // Check if this item is already selected FOR THE CURRENT MEAL TYPE
-          const existing = selections.findIndex(s => s.name === name && s.mealType === currentMeal);
+          // Check if this item is already selected (by name, regardless of hall)
+          const existing = selections.findIndex(s => s.name === name);
           
           if (this.classList.contains('selected') || existing >= 0) {
-            // Remove item for current meal type only
+            // Remove item
             if (existing >= 0) {
               SelectionManager.removeItem(existing);
             }
             this.classList.remove('selected');
+            this.classList.remove('selected-other-hall');
           } else {
-            // Add item via SelectionManager for current meal type
+            // Add item via SelectionManager
             const success = SelectionManager.addItem({
               name: name,
               calories: calories,
@@ -2291,7 +2337,23 @@
         }
 
         updateDisplay();
+        syncWithGlobalSelection(); // Update all chips after change
       });
+    });
+    
+    // Listen for item selection events to update UI
+    window.addEventListener('itemSelected', function(e) {
+      syncWithGlobalSelection();
+    });
+    
+    // Listen for item removal events to update UI
+    window.addEventListener('itemRemoved', function(e) {
+      syncWithGlobalSelection();
+    });
+    
+    // Listen for selection changes
+    window.addEventListener('selectionChanged', function(e) {
+      syncWithGlobalSelection();
     });
   }
 
@@ -2381,38 +2443,45 @@
         const removed = selections[index];
         SelectionManager.removeItem(index);
         
-        // Update chip UI
+        // Update chip UI across all halls
         document.querySelectorAll('.menu-chip').forEach(chip => {
           if (chip.dataset.name === removed.name) {
             chip.classList.remove('selected');
+            chip.classList.remove('selected-other-hall');
+            chip.title = '';
           }
         });
       }
     }
     updateDisplay();
+    syncWithGlobalSelection(); // Update all chips after removal
   }
 
   function clearSelection() {
     if (typeof SelectionManager !== 'undefined') {
       SelectionManager.clearAll();
     }
-    document.querySelectorAll('.menu-chip.selected').forEach(chip => {
+    document.querySelectorAll('.menu-chip').forEach(chip => {
       chip.classList.remove('selected');
+      chip.classList.remove('selected-other-hall');
+      chip.title = '';
     });
     updateDisplay();
+    syncWithGlobalSelection();
   }
 
   function confirmMeal() {
-    const selectedItems = getSelectedItems();
-    if (selectedItems.length === 0) {
-      showToast('Please select some items first', true);
-      return;
+    // Use the global SelectionManager to confirm selection
+    if (typeof SelectionManager !== 'undefined' && SelectionManager.confirmSelection) {
+      SelectionManager.confirmSelection().then(success => {
+        if (success) {
+          // Update display after confirmation
+          updateDisplay();
+        }
+      });
+    } else {
+      showToast('Selection manager not available', true);
     }
-
-    const mealName = currentMeal.charAt(0).toUpperCase() + currentMeal.slice(1);
-    const total = selectedItems.reduce((s, i) => s + (i.calories || 0), 0);
-
-    showToast(`${mealName} confirmed! ${total} kcal`);
   }
 
   // AI Chat

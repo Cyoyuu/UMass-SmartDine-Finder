@@ -5,7 +5,9 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import logout, login
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from menus.models import UserProfile, ALLERGEN_CHOICES, DIET_CHOICES
+from menus.models import UserProfile, ALLERGEN_CHOICES, DIET_CHOICES, MealHistory
+from datetime import datetime
+import json
 
 
 class RegisterView(CreateView):
@@ -92,6 +94,15 @@ def survey_view(request):
         calorie_target = request.POST.get('calorieTarget', 2000)
         diet_preferences = request.POST.getlist('dietPreferences')
         
+        # Check if preferences changed (compare with existing profile)
+        old_allergens = sorted(profile.allergens or [])
+        old_diet_preferences = sorted(profile.dietPreferences or [])
+        new_allergens = sorted(allergens)
+        new_diet_preferences = sorted(diet_preferences)
+        
+        allergens_changed = old_allergens != new_allergens
+        diet_preferences_changed = old_diet_preferences != new_diet_preferences
+        
         # Update profile
         profile.allergens = allergens
         profile.calorieTarget = int(calorie_target) if calorie_target else 2000
@@ -99,13 +110,21 @@ def survey_view(request):
         profile.surveyCompleted = True
         profile.save()
         
+        # If preferences changed, clear today's selection from database
+        if allergens_changed or diet_preferences_changed:
+            today = datetime.now().date()
+            MealHistory.objects.filter(user=request.user, date=today).delete()
+        
         # Redirect to recommendations page
         return redirect('recommendations')
     
+    # Convert preferences to JSON strings for JavaScript
     context = {
         'profile': profile,
         'allergen_choices': ALLERGEN_CHOICES,
         'diet_choices': DIET_CHOICES,
+        'profile_allergens_json': json.dumps(profile.allergens or []),
+        'profile_diet_preferences_json': json.dumps(profile.dietPreferences or []),
     }
     return render(request, 'registration/survey.html', context)
 

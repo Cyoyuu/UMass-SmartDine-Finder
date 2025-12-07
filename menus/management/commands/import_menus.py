@@ -70,6 +70,10 @@ class Command(BaseCommand):
             hall_name = hall_data.get('hallName')
             
             # Get or create the dining hall
+            # Note: menuByDate is stored as TextField, so we need to serialize it as JSON string
+            menu_by_date = hall_data.get('menuByDate', [])
+            menu_by_date_str = json.dumps(menu_by_date) if menu_by_date else None
+            
             dining_hall, created = DiningHall.objects.update_or_create(
                 hallName=hall_name,
                 defaults={
@@ -83,7 +87,8 @@ class Command(BaseCommand):
                         'breakfast': [],
                         'lunch': [],
                         'dinner': []
-                    })
+                    }),
+                    'menuByDate': menu_by_date_str
                 }
             )
             
