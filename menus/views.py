@@ -510,7 +510,14 @@ def menu_view(request):
         available_dates = []
         
         for hall in all_halls:
-            hall_dates = hall.menuByDate or []
+            # Parse menuByDate from TextField (stored as JSON string)
+            if hall.menuByDate:
+                try:
+                    hall_dates = json.loads(hall.menuByDate)
+                except (json.JSONDecodeError, TypeError):
+                    hall_dates = []
+            else:
+                hall_dates = []
             menus_by_date[hall.hallName] = hall_dates
             
             # Collect available dates (use first hall's dates)

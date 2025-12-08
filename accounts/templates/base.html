@@ -526,8 +526,13 @@
         color: #ef4444;
       }
 
+      .sidebar-actions {
+        display: flex;
+        gap: 8px;
+      }
+
       .clear-selection {
-        width: 100%;
+        flex: 1;
         padding: 10px;
         background: #fff;
         border: 1px solid #e2e8f0;
@@ -543,6 +548,30 @@
         border-color: #ef4444;
         color: #ef4444;
         background: #fef2f2;
+      }
+
+      .confirm-selection {
+        flex: 1;
+        padding: 10px;
+        background: #6366f1;
+        border: 1px solid #6366f1;
+        border-radius: 8px;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+
+      .confirm-selection:hover {
+        background: #4f46e5;
+        border-color: #4f46e5;
+      }
+
+      .confirm-selection:disabled {
+        background: #cbd5e1;
+        border-color: #cbd5e1;
+        cursor: not-allowed;
       }
 
       .sidebar-overlay {
@@ -676,13 +705,22 @@
   </head>
   <body>
     <!-- Date Banner -->
+    {% now "F j, Y" as current_date %}
+    {% now "l" as current_day %}
+    {% now "w" as day_of_week %}
     <div class="date-banner" id="dateBanner">
       <span class="date-banner-icon">📅</span>
-      <span class="date-banner-text" id="dateText">Loading...</span>
-      <span class="date-banner-day" id="dayText"></span>
+      <span class="date-banner-text" id="dateText">{{ current_date }}</span>
+      <span class="date-banner-day" id="dayText">({{ current_day }})</span>
+      {% if day_of_week == "0" or day_of_week == "6" %}
+      <span class="weekend-notice" id="weekendNotice" style="display: inline-flex;">
+        ⚠️ Weekend - No Breakfast Served
+      </span>
+      {% else %}
       <span class="weekend-notice" id="weekendNotice" style="display: none;">
         ⚠️ Weekend - No Breakfast Served
       </span>
+      {% endif %}
     </div>
 
     <header>
@@ -745,7 +783,10 @@
           <span class="calories-label">Total Calories</span>
           <span class="calories-value" id="totalCalories">0 kcal</span>
         </div>
-        <button class="clear-selection" onclick="clearAllSelections()">Clear All Selections</button>
+        <div class="sidebar-actions">
+          <button class="clear-selection" onclick="clearAllSelections()">Clear All</button>
+          <button class="confirm-selection" onclick="confirmTodaySelection()">Confirm</button>
+        </div>
       </div>
     </div>
 
@@ -771,8 +812,7 @@
           this.updateUI();
           // Dispatch event for other pages to listen
           window.dispatchEvent(new CustomEvent('selectionChanged', { detail: selections }));
-          // Sync to server (debounced)
-          this.syncToServer();
+          // Note: No longer auto-syncing to server. Only sync when user confirms.
         },
         
         // Locked Hall Management - Per Meal Type
@@ -854,6 +894,60 @@
             })
             .catch(err => console.log('Sync error (offline?):', err));
           }, 2000); // Wait 2 seconds before syncing
+        },
+        
+        // Confirm and save selections to meal history
+        confirmSelection() {
+          const selections = this.getSelections();
+          if (selections.length === 0) {
+            if (typeof showGlobalToast !== 'undefined') {
+              showGlobalToast('Please select some items first', 'warning');
+            }
+            return false;
+          }
+          
+          // Format meals for server
+          const meals = selections.map(item => ({
+            name: item.name,
+            calories: item.calories || 0,
+            diningHall: item.hall || 'Unknown',
+            mealType: item.mealType || this.guessMealType(),
+            addedAt: item.addedAt
+          }));
+          
+          // Send to server immediately (no debounce)
+          return fetch('/menus/history/save/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': this.getCSRFToken()
+            },
+            body: JSON.stringify({ meals: meals })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              const totalCal = this.getTotalCalories();
+              if (typeof showGlobalToast !== 'undefined') {
+                showGlobalToast(`✓ Selection confirmed! ${totalCal} kcal saved to meal history`, 'success');
+              }
+              // Dispatch event for other pages to listen
+              window.dispatchEvent(new CustomEvent('selectionConfirmed', { detail: selections }));
+              return true;
+            } else {
+              if (typeof showGlobalToast !== 'undefined') {
+                showGlobalToast('Failed to save meal history', 'error');
+              }
+              return false;
+            }
+          })
+          .catch(err => {
+            console.error('Error confirming selection:', err);
+            if (typeof showGlobalToast !== 'undefined') {
+              showGlobalToast('Error saving meal history', 'error');
+            }
+            return false;
+          });
         },
         
         getCSRFToken() {
@@ -942,7 +1036,15 @@
           }
           
           const selections = this.getSelections();
-          // Check if already exists
+          
+          // Check if same dish name already exists in ANY hall (cross-hall uniqueness)
+          const existingSameName = selections.find(s => s.name === dish.name);
+          if (existingSameName) {
+            showGlobalToast(`⚠️ "${dish.name}" is already selected from ${existingSameName.hall}. Please remove it first to select from another hall.`, 'warning');
+            return false;
+          }
+          
+          // Check if already exists (same hall, same meal type)
           if (selections.find(s => s.name === dish.name && s.hall === dish.hall && s.mealType === mealType)) {
             showGlobalToast('Already in your selection', 'warning');
             return false;
@@ -965,6 +1067,10 @@
           
           this.saveSelections(selections);
           showGlobalToast(`✓ Added ${dish.name} to ${mealType}`, 'success');
+          
+          // Dispatch event to update UI in other halls
+          window.dispatchEvent(new CustomEvent('itemSelected', { detail: { name: dish.name } }));
+          
           return true;
         },
         
@@ -972,6 +1078,7 @@
           const selections = this.getSelections();
           if (index >= 0 && index < selections.length) {
             const removed = selections.splice(index, 1);
+            const removedName = removed[0].name;
             
             // Check if we need to unlock this meal type
             const mealType = removed[0].mealType;
@@ -981,7 +1088,10 @@
             }
             
             this.saveSelections(selections);
-            showGlobalToast(`Removed ${removed[0].name}`, 'warning');
+            showGlobalToast(`Removed ${removedName}`, 'warning');
+            
+            // Dispatch event to update UI in other halls
+            window.dispatchEvent(new CustomEvent('itemRemoved', { detail: { name: removedName } }));
           }
         },
         
@@ -1091,6 +1201,12 @@
       function clearAllSelections() {
         if (confirm('Clear all selections?')) {
           SelectionManager.clearAll();
+        }
+      }
+
+      function confirmTodaySelection() {
+        if (typeof SelectionManager !== 'undefined' && SelectionManager.confirmSelection) {
+          SelectionManager.confirmSelection();
         }
       }
 

@@ -702,6 +702,16 @@
     color: #1e293b;
   }
 
+  .primary-hall-tag {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6366f1;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    padding: 4px 10px;
+    border-radius: 12px;
+    margin-left: 8px;
+  }
+
   .total-cal {
     margin-left: auto;
     font-size: 13px;
@@ -973,8 +983,7 @@
 
   <!-- Right: Info Cards -->
   <div class="info-section">
-    {% if user.is_authenticated %}
-    <!-- Special Events Card -->
+    <!-- Special Events Card - visible to all users -->
     <div class="info-card">
       <div class="card-header">
         <div class="card-icon special">✨</div>
@@ -987,7 +996,7 @@
             <span class="event-month">Dec</span>
           </div>
           <div class="event-info">
-            <h4 class="event-title">With Gueset Chef James Bickmore-Hutt</h4>
+            <h4 class="event-title">With Guest Chef James Bickmore-Hutt</h4>
             <p class="event-desc">5:00 - 9:00 PM</p>
             <span class="event-location">📍 Worcester DC</span>
           </div>
@@ -1006,6 +1015,7 @@
       </div>
     </div>
 
+    {% if user.is_authenticated %}
     <!-- Last Meal Card -->
     <div class="info-card">
       <div class="card-header">
@@ -1037,7 +1047,6 @@
     <!-- Welcome Card for non-authenticated users -->
     <div class="info-card welcome-card">
       <div class="card-header">
-        <div class="card-icon welcome">🍽</div>
         <h3 class="card-title">SmartDine Finder</h3>
       </div>
       <div class="card-body">
@@ -1136,6 +1145,12 @@
     const rect = container.getBoundingClientRect();
     containerWidth = rect.width;
     containerHeight = rect.height;
+    
+    // Handle empty dishes array
+    if (currentDishes.length === 0) {
+      container.innerHTML = '<div style="color: #94a3b8; text-align: center; padding: 40px;">No dishes available for this meal type</div>';
+      return;
+    }
     
     const maxCount = Math.max(...currentDishes.map(d => d.count));
     const minCount = Math.min(...currentDishes.map(d => d.count));
@@ -1371,7 +1386,7 @@
     
     const card = document.getElementById('dishCard');
     const header = document.getElementById('dishCardHeader');
-    const maxCount = Math.max(...currentDishes.map(d => d.count));
+    const maxCount = currentDishes.length > 0 ? Math.max(...currentDishes.map(d => d.count)) : 1;
     
     header.style.background = colorSet.bg;
     document.getElementById('dishCardName').textContent = dish.name;
@@ -1393,6 +1408,15 @@
     const warning = document.getElementById('allergenWarning');
     const warningText = document.getElementById('allergenWarningText');
     
+    // Check if user is authenticated
+    {% if not user.is_authenticated %}
+    // For non-authenticated users, show login prompt
+    addBtn.disabled = false;
+    addBtn.innerHTML = '<span>🔐</span> Login to Add';
+    addBtn.classList.remove('added');
+    warning.style.display = 'none';
+    {% else %}
+    // For authenticated users, check SelectionManager
     if (typeof SelectionManager !== 'undefined') {
       const hallName = hallNames[currentHall];
       const mealType = currentMeal;
@@ -1432,7 +1456,13 @@
         addBtn.classList.remove('added');
         warning.style.display = 'none';
       }
+    } else {
+      // SelectionManager not available
+      addBtn.disabled = true;
+      addBtn.innerHTML = '⚠️ Not Available';
+      warning.style.display = 'none';
     }
+    {% endif %}
     
     const rect = event.target.closest('.bubble').getBoundingClientRect();
     let left = rect.right + 12;
@@ -1447,6 +1477,13 @@
   }
 
   function addCurrentDishToSelection() {
+    // Check if user is authenticated
+    {% if not user.is_authenticated %}
+    // Redirect to login page for non-authenticated users
+    window.location.href = '/login/';
+    return;
+    {% endif %}
+    
     if (!currentViewingDish || typeof SelectionManager === 'undefined') return;
     
     const success = SelectionManager.addItem({
@@ -1478,6 +1515,14 @@
     initWeekendLogic();
     setTimeout(generateVisualization, 100);
     loadLastSelection();
+    
+    // Listen for selection confirmation to update last selection
+    window.addEventListener('selectionConfirmed', () => {
+      // Reload last selection after a short delay to ensure server has updated
+      setTimeout(() => {
+        loadLastSelection();
+      }, 500);
+    });
   });
 
   // Handle weekend - no breakfast on Saturdays and Sundays
@@ -1515,21 +1560,27 @@
     window.isWeekend = isWeekend;
   }
 
-  // Load last selection from database (excluding today - show previous day's selection)
+  // Load last selection from database (show most recent day with data, including today)
   async function loadLastSelection() {
     const container = document.getElementById('lastSelectionBody');
     if (!container) return;
     
+    // Only load if user is authenticated
+    {% if not user.is_authenticated %}
+    return;
+    {% endif %}
+    
     try {
       const response = await fetch('/menus/history/');
+      if (!response.ok) {
+        throw new Error('Failed to fetch meal history');
+      }
       const data = await response.json();
       
       if (data.success && data.history) {
-        // Get today's date string
-        const today = new Date().toISOString().split('T')[0];
-        
-        // Find the most recent day with data, EXCLUDING today
-        const lastDay = data.history.find(day => day.hasData && day.date !== today);
+        // Find the most recent day with data (history is already sorted by date descending)
+        // This includes today if it has data
+        const lastDay = data.history.find(day => day.hasData);
         
         if (lastDay && lastDay.meals && lastDay.meals.length > 0) {
           renderLastSelection(lastDay);
@@ -1555,16 +1606,20 @@
     
     // Group meals by meal type
     const mealsByType = {
-      breakfast: { items: [], hall: '', calories: 0 },
-      lunch: { items: [], hall: '', calories: 0 },
-      dinner: { items: [], hall: '', calories: 0 }
+      breakfast: { items: [], halls: new Set(), calories: 0 },
+      lunch: { items: [], halls: new Set(), calories: 0 },
+      dinner: { items: [], halls: new Set(), calories: 0 }
     };
     
     meals.forEach(meal => {
       const type = meal.mealType || 'lunch';
       if (mealsByType[type]) {
         mealsByType[type].items.push(meal);
-        mealsByType[type].hall = meal.hall || '';
+        // Use diningHall field (not hall)
+        const hall = meal.diningHall || meal.hall || '';
+        if (hall) {
+          mealsByType[type].halls.add(hall);
+        }
         mealsByType[type].calories += (meal.calories || 0);
       }
     });
@@ -1584,12 +1639,16 @@
     ['breakfast', 'lunch', 'dinner'].forEach(type => {
       const mealData = mealsByType[type];
       if (mealData.items.length > 0) {
+        // Get halls for this meal type (convert Set to Array)
+        const halls = Array.from(mealData.halls);
+        const hallDisplay = halls.length > 0 ? halls.join(', ') : '';
+        
         html += `
           <div class="meal-section-group">
             <div class="meal-section-header">
               <span class="meal-type-icon">${mealIcons[type]}</span>
               <span class="meal-type-label">${mealLabels[type]}</span>
-              <span class="meal-hall-tag">${mealData.hall}</span>
+              ${hallDisplay ? `<span class="meal-hall-tag">${hallDisplay}</span>` : ''}
             </div>
             <div class="meal-section-items">
         `;
@@ -1875,10 +1934,24 @@
     localStorage.setItem(ONBOARDING_KEY, 'true');
   }
   
-  // Check onboarding on page load
+  // Check onboarding on page load (only for newly registered users)
   document.addEventListener('DOMContentLoaded', function() {
-    // Delay to let page render first
-    setTimeout(checkOnboarding, 500);
+    {% if user.is_authenticated %}
+    // Only show onboarding for newly registered users (check URL parameter)
+    const urlParams = new URLSearchParams(window.location.search);
+    const isNewUser = urlParams.get('new_user') === 'true';
+    
+    if (isNewUser) {
+      // Clear the URL parameter for cleaner URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      // Clear any existing onboarding completion flag for new users
+      localStorage.removeItem(ONBOARDING_KEY);
+      // Delay to let page render first, then show onboarding
+      setTimeout(() => {
+        showOnboardingOverlay();
+      }, 500);
+    }
+    {% endif %}
   });
 </script>
 
