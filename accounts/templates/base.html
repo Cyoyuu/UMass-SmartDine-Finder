@@ -705,13 +705,22 @@
   </head>
   <body>
     <!-- Date Banner -->
+    {% now "F j, Y" as current_date %}
+    {% now "l" as current_day %}
+    {% now "w" as day_of_week %}
     <div class="date-banner" id="dateBanner">
       <span class="date-banner-icon">📅</span>
-      <span class="date-banner-text" id="dateText">Loading...</span>
-      <span class="date-banner-day" id="dayText"></span>
+      <span class="date-banner-text" id="dateText">{{ current_date }}</span>
+      <span class="date-banner-day" id="dayText">({{ current_day }})</span>
+      {% if day_of_week == "0" or day_of_week == "6" %}
+      <span class="weekend-notice" id="weekendNotice" style="display: inline-flex;">
+        ⚠️ Weekend - No Breakfast Served
+      </span>
+      {% else %}
       <span class="weekend-notice" id="weekendNotice" style="display: none;">
         ⚠️ Weekend - No Breakfast Served
       </span>
+      {% endif %}
     </div>
 
     <header>

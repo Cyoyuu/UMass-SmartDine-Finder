@@ -1,5 +1,5 @@
 from django.contrib.auth.forms import UserCreationForm
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.views.generic import CreateView
 from django.shortcuts import render, redirect
 from django.contrib.auth import logout, login
@@ -21,8 +21,8 @@ class RegisterView(CreateView):
         user = form.save()
         # Log the user in
         login(self.request, user)
-        # Redirect to home (onboarding will guide to preferences)
-        return redirect('home')
+        # Redirect to home with new_user flag to show onboarding
+        return redirect(reverse('home') + '?new_user=true')
 
 
 def home_view(request):
@@ -139,6 +139,6 @@ def skip_survey(request):
 
 
 def logout_then_login(request):
-    """Logs the user out and redirects to the login page."""
+    """Logs the user out and redirects to the home page."""
     logout(request)
-    return redirect('login')
+    return redirect('home')
