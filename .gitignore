@@ -4,3 +4,10 @@ __pycache__
 .env
 .env.local
 .env.*.local
+
+# Submodule build artifacts (ignore build artifacts in submodules)
+umass-toolkit/build/
+umass-toolkit/dist/
+umass-toolkit/*.egg-info/
+umass-toolkit/__pycache__/
+umass-toolkit/**/__pycache__/
