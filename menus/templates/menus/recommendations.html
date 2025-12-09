@@ -1548,18 +1548,18 @@
                   {% with meals=hall.filteredMeals %}
                     {% if current_meal == 'breakfast' %}
                       {% for item in meals.breakfast %}
-                        <div class="menu-chip {% if item.dietCategories %}has-diet-tags{% endif %}"
+                        <div class="menu-chip {% if item.dietCategories or item.dietTags %}has-diet-tags{% endif %}"
                              data-name="{% if item.name %}{{ item.name }}{% else %}{{ item }}{% endif %}"
                              data-calories="{% if item.calories %}{{ item.calories }}{% else %}300{% endif %}"
                              data-hall="{{ hall.hallName }}">
                           <span class="chip-name">{% if item.name %}{{ item.name }}{% else %}{{ item }}{% endif %}</span>
-                          {% if item.dietCategories %}
-                            <span class="chip-diet-badge" title="{{ item.dietCategories|join:', ' }}">✓</span>
+                          {% if item.dietCategories or item.dietTags %}
+                            <span class="chip-diet-badge" title="{% if item.dietCategories %}{{ item.dietCategories|join:', ' }}{% else %}{{ item.dietTags|join:', ' }}{% endif %}">✓</span>
                           {% endif %}
                           <div class="chip-tooltip">
                             <span class="tooltip-cal">{% if item.calories %}{{ item.calories }}{% else %}300{% endif %} kcal</span>
-                            {% if item.dietCategories %}
-                              <span class="tooltip-diet">{{ item.dietCategories|join:", " }}</span>
+                            {% if item.dietCategories or item.dietTags %}
+                              <span class="tooltip-diet">{% if item.dietCategories %}{{ item.dietCategories|join:", " }}{% else %}{{ item.dietTags|join:", " }}{% endif %}</span>
                             {% endif %}
                           </div>
                         </div>
@@ -1572,18 +1572,18 @@
                       {% endfor %}
                     {% elif current_meal == 'lunch' %}
                       {% for item in meals.lunch %}
-                        <div class="menu-chip {% if item.dietCategories %}has-diet-tags{% endif %}"
+                        <div class="menu-chip {% if item.dietCategories or item.dietTags %}has-diet-tags{% endif %}"
                              data-name="{% if item.name %}{{ item.name }}{% else %}{{ item }}{% endif %}"
                              data-calories="{% if item.calories %}{{ item.calories }}{% else %}300{% endif %}"
                              data-hall="{{ hall.hallName }}">
                           <span class="chip-name">{% if item.name %}{{ item.name }}{% else %}{{ item }}{% endif %}</span>
-                          {% if item.dietCategories %}
-                            <span class="chip-diet-badge" title="{{ item.dietCategories|join:', ' }}">✓</span>
+                          {% if item.dietCategories or item.dietTags %}
+                            <span class="chip-diet-badge" title="{% if item.dietCategories %}{{ item.dietCategories|join:', ' }}{% else %}{{ item.dietTags|join:', ' }}{% endif %}">✓</span>
                           {% endif %}
                           <div class="chip-tooltip">
                             <span class="tooltip-cal">{% if item.calories %}{{ item.calories }}{% else %}300{% endif %} kcal</span>
-                            {% if item.dietCategories %}
-                              <span class="tooltip-diet">{{ item.dietCategories|join:", " }}</span>
+                            {% if item.dietCategories or item.dietTags %}
+                              <span class="tooltip-diet">{% if item.dietCategories %}{{ item.dietCategories|join:", " }}{% else %}{{ item.dietTags|join:", " }}{% endif %}</span>
                             {% endif %}
                           </div>
                         </div>
@@ -1596,18 +1596,18 @@
                       {% endfor %}
                     {% else %}
                       {% for item in meals.dinner %}
-                        <div class="menu-chip {% if item.dietCategories %}has-diet-tags{% endif %}"
+                        <div class="menu-chip {% if item.dietCategories or item.dietTags %}has-diet-tags{% endif %}"
                              data-name="{% if item.name %}{{ item.name }}{% else %}{{ item }}{% endif %}"
                              data-calories="{% if item.calories %}{{ item.calories }}{% else %}300{% endif %}"
                              data-hall="{{ hall.hallName }}">
                           <span class="chip-name">{% if item.name %}{{ item.name }}{% else %}{{ item }}{% endif %}</span>
-                          {% if item.dietCategories %}
-                            <span class="chip-diet-badge" title="{{ item.dietCategories|join:', ' }}">✓</span>
+                          {% if item.dietCategories or item.dietTags %}
+                            <span class="chip-diet-badge" title="{% if item.dietCategories %}{{ item.dietCategories|join:', ' }}{% else %}{{ item.dietTags|join:', ' }}{% endif %}">✓</span>
                           {% endif %}
                           <div class="chip-tooltip">
                             <span class="tooltip-cal">{% if item.calories %}{{ item.calories }}{% else %}300{% endif %} kcal</span>
-                            {% if item.dietCategories %}
-                              <span class="tooltip-diet">{{ item.dietCategories|join:", " }}</span>
+                            {% if item.dietCategories or item.dietTags %}
+                              <span class="tooltip-diet">{% if item.dietCategories %}{{ item.dietCategories|join:", " }}{% else %}{{ item.dietTags|join:", " }}{% endif %}</span>
                             {% endif %}
                           </div>
                         </div>

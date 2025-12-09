@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from django.views.decorators.http import require_http_methods
 import json
 import os
+import copy
 from django.conf import settings
 from .models import DiningHall, Review, UserProfile, MealHistory, ALLERGEN_CHOICES, DIET_CHOICES
 from recommendation import get_recommendations_for_all_dining
@@ -161,8 +162,8 @@ def calculate_hall_score(hall_data, user_allergens=None, user_diet_prefs=None):
                 if user_allergens and any(a in item_allergens for a in user_allergens):
                     continue
                 
-                # Add points for diet preference matches (use dietCategories)
-                item_diet_categories = item.get("dietCategories", [])
+                # Add points for diet preference matches (use dietCategories or dietTags)
+                item_diet_categories = item.get("dietCategories", []) or item.get("dietTags", [])
                 if user_diet_prefs:
                     matches = sum(1 for d in user_diet_prefs if d in item_diet_categories)
                     if matches > 0:
@@ -184,7 +185,7 @@ def calculate_hall_score(hall_data, user_allergens=None, user_diet_prefs=None):
     
     # Calculate match rate (percentage)
     if total_items > 0:
-        match_rate = min(95, max(60, int((total_matching_items / total_items) * 100) + (preference_matches * 5)))
+        match_rate = min(100, max(60, int((total_matching_items / total_items) * 100) + (preference_matches * 5)))
     else:
         match_rate = 70
     
@@ -246,8 +247,9 @@ def get_dining_halls_data(current_user=None, include_filtered=False):
             avg_rating = sum(r["rating"] for r in reviews_data) / len(reviews_data) if reviews_data else 0
             
             # Get meals from database
-            all_meals = db_hall.meals or {"breakfast": [], "lunch": [], "dinner": []}
-            filtered_meals = filter_meals_for_user(all_meals, user_allergens, user_diet_prefs) if include_filtered else all_meals
+            # IMPORTANT: Create a deep copy to avoid modifying the original data
+            all_meals = copy.deepcopy(db_hall.meals) if db_hall.meals else {"breakfast": [], "lunch": [], "dinner": []}
+            filtered_meals = filter_meals_for_user(all_meals, user_allergens, user_diet_prefs) if include_filtered else copy.deepcopy(all_meals)
             
             hall_data = {
                 "id": hall_id,
@@ -255,7 +257,7 @@ def get_dining_halls_data(current_user=None, include_filtered=False):
                 "hours": db_hall.hours,
                 "mealHours": db_hall.mealHours or {},
                 "isOpen": is_hall_open(db_hall.hours),
-                "meals": all_meals,
+                "meals": all_meals,  # This is now a deep copy, safe from modification
                 "filteredMeals": filtered_meals,
                 "reviews": reviews_data,
                 "avgRating": round(avg_rating, 1),
@@ -315,8 +317,8 @@ def calculate_meal_specific_score(hall_data, meal_type, user_allergens=None, use
             safe_items += 1
             score += 10  # Base points for safe item
             
-            # Check diet preference matches
-            item_diet_categories = item.get("dietCategories", [])
+            # Check diet preference matches (support both dietCategories and dietTags)
+            item_diet_categories = item.get("dietCategories", []) or item.get("dietTags", [])
             if user_diet_prefs and item_diet_categories:
                 diet_matches = sum(1 for d in user_diet_prefs if d in item_diet_categories)
                 if diet_matches > 0:
@@ -343,7 +345,7 @@ def calculate_meal_specific_score(hall_data, meal_type, user_allergens=None, use
             match_rate = int(safe_rate * 0.7 + diet_rate * 0.3)  # Weighted average
         else:
             match_rate = int(safe_rate)
-        match_rate = min(95, max(0, match_rate))
+        match_rate = min(100, max(0, match_rate))
     else:
         match_rate = 0
     
@@ -387,7 +389,8 @@ def filter_meals_by_preferences(meals, user_allergens, user_diet_prefs):
                 
                 # Check 2: Diet preference matching (if user has preferences)
                 if user_diet_prefs:
-                    item_diet_categories = item.get('dietCategories', [])
+                    # Support both dietCategories (from scraped data) and dietTags (from old format)
+                    item_diet_categories = item.get('dietCategories', []) or item.get('dietTags', [])
                     matches_diet = any(d in item_diet_categories for d in user_diet_prefs)
                     
                     if matches_diet:
@@ -432,9 +435,40 @@ def recommendations_view(request):
         user_allergens = profile.allergens or []
         user_diet_prefs = profile.dietPreferences or []
         
+        # Get today's date to fetch menuByDate data
+        today = datetime.now().date()
+        today_str = today.strftime('%Y-%m-%d')
+        
+        # Get all dining halls from database to access menuByDate
+        db_halls = DiningHall.objects.all()
+        hall_menu_by_date = {}
+        for db_hall in db_halls:
+            if db_hall.menuByDate:
+                try:
+                    hall_dates = json.loads(db_hall.menuByDate)
+                    # Find today's menu data
+                    today_menu = next((d for d in hall_dates if d.get('date') == today_str), None)
+                    if today_menu and today_menu.get('meals'):
+                        hall_menu_by_date[db_hall.hallName] = today_menu.get('meals', {})
+                except (json.JSONDecodeError, TypeError):
+                    pass
+        
         # Calculate meal-specific scores and filter meals for each hall
         for hall in dining_halls:
-            # Calculate scores
+            hall_name = hall.get('hallName', '')
+            
+            # Use menuByDate data for today if available, otherwise fallback to meals field
+            if hall_name in hall_menu_by_date:
+                # Use today's menu from menuByDate (this has correct breakfast/lunch separation)
+                original_meals = copy.deepcopy(hall_menu_by_date[hall_name])
+                hall['meals'] = original_meals  # Update hall['meals'] with today's data
+            else:
+                # Fallback to meals field if menuByDate not available
+                original_meals = hall.get('meals', {})
+                if not original_meals:
+                    original_meals = {"breakfast": [], "lunch": [], "dinner": []}
+            
+            # Calculate scores using the correct meal data
             meal_score, meal_items, meal_rate = calculate_meal_specific_score(
                 hall, current_meal, user_allergens, user_diet_prefs
             )
@@ -444,7 +478,7 @@ def recommendations_view(request):
             
             # Filter meals based on user preferences
             # Only show items that are safe (no allergens) AND match diet preferences
-            original_meals = hall.get('meals', {})
+            # Filter meals separately for each meal type (breakfast, lunch, dinner)
             hall['filteredMeals'] = filter_meals_by_preferences(
                 original_meals, user_allergens, user_diet_prefs
             )
